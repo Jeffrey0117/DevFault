@@ -83,6 +83,25 @@
       color: #fc8181;
       border: 1px solid rgba(229, 62, 62, 0.2);
     }
+    .tool-chip.checking {
+      background: #1e1e1e;
+      color: #555;
+      border: 1px solid #2a2a2a;
+      position: relative;
+      overflow: hidden;
+    }
+    .tool-chip.checking::after {
+      content: "";
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      100% { left: 100%; }
+    }
 
     /* Repos */
     .repo-list {
@@ -222,9 +241,62 @@
     }
     .btn-sync:active { transform: scale(0.97); }
     .btn-sync:disabled { opacity: 0.3; cursor: default; transform: none; }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .loading-overlay.active {
+      display: flex;
+    }
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #333;
+      border-top-color: #d4a054;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+    .loading-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #d4a054;
+    }
+    .loading-log {
+      width: 80%;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 11px;
+      color: #888;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loading-text"></div>
+    <div class="loading-log" id="loading-log"></div>
+  </div>
+
   <div class="header">
     <h1>devup</h1>
     <div class="header-right">
@@ -259,6 +331,8 @@
         notCloned: "尚未下載",
         noRunCmd: "無啟動指令",
         toggle: "EN",
+        checkingTools: "正在檢查工具...",
+        syncProgress: "同步中...",
       },
       en: {
         tools: "TOOLS",
@@ -272,6 +346,8 @@
         notCloned: "not cloned",
         noRunCmd: "no run command",
         toggle: "中",
+        checkingTools: "Checking tools...",
+        syncProgress: "Syncing...",
       },
     }
 
@@ -292,6 +368,17 @@
       localStorage.setItem("devup-lang", lang)
       applyLang()
       renderRepos()
+    }
+
+    function renderToolsShimmer(names) {
+      const bar = document.getElementById("tools-bar")
+      bar.innerHTML = ""
+      for (const name of names) {
+        const chip = document.createElement("span")
+        chip.className = "tool-chip checking"
+        chip.textContent = name
+        bar.appendChild(chip)
+      }
     }
 
     function renderTools(tools) {
@@ -365,12 +452,21 @@
       }
     }
 
-    // Full load (tools + repos) — only on startup & after sync
+    // Progressive startup: repos first, then tool names (shimmer), then full tool status
     async function fullLoad() {
-      const { tools, repos } = await ipcRenderer.invoke("get-data")
+      // Step 1: Repos render instantly
+      const reposPromise = ipcRenderer.invoke("get-repos")
+      // Step 2: Tool names for shimmer placeholders
+      const toolNamesPromise = ipcRenderer.invoke("get-tool-names")
+
+      const [repos, toolNames] = await Promise.all([reposPromise, toolNamesPromise])
+      renderRepoList(repos)
+      renderToolsShimmer(toolNames)
+
+      // Step 3: Full tool check (parallel, async) — UI stays interactive
+      const tools = await ipcRenderer.invoke("get-tools")
       cachedTools = tools
       renderTools(tools)
-      renderRepoList(repos)
     }
 
     // Fast refresh — repos only, no tool re-check
@@ -398,16 +494,43 @@
       ipcRenderer.invoke("stop-project", name).then(() => renderRepos())
     }
 
+    // Loading overlay helpers
+    function showOverlay(text) {
+      const overlay = document.getElementById("loading-overlay")
+      document.getElementById("loading-text").textContent = text
+      document.getElementById("loading-log").textContent = ""
+      overlay.classList.add("active")
+    }
+
+    function hideOverlay() {
+      document.getElementById("loading-overlay").classList.remove("active")
+    }
+
+    function appendOverlayLog(line) {
+      const log = document.getElementById("loading-log")
+      log.textContent += line + "\n"
+      log.scrollTop = log.scrollHeight
+    }
+
     async function syncAll() {
       const btn = document.getElementById("sync-btn")
       btn.disabled = true
       btn.textContent = t("syncing")
-      await ipcRenderer.invoke("sync-all")
+      showOverlay(t("syncProgress"))
+
+      const result = await ipcRenderer.invoke("sync-all")
+
+      hideOverlay()
       btn.textContent = t("syncAll")
       btn.disabled = false
       // After sync, do full reload (repos might have been cloned, tools might have changed)
       fullLoad()
     }
+
+    // Listen for real-time sync progress from main process
+    ipcRenderer.on("sync-progress", (_, line) => {
+      appendOverlayLog(line)
+    })
 
     // Auto-refresh when a process exits — fast path
     ipcRenderer.on("status-changed", () => renderRepos())

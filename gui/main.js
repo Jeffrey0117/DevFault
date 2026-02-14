@@ -1,8 +1,11 @@
 const { app, BrowserWindow, ipcMain } = require("electron")
-const { execSync, spawn } = require("child_process")
+const { execSync, spawn, exec: execCb } = require("child_process")
+const { promisify } = require("util")
 const fs = require("fs")
 const path = require("path")
 const os = require("os")
+
+const exec = promisify(execCb)
 
 // Load config (same logic as CLI)
 const candidates = [
@@ -20,28 +23,35 @@ const running = {}
 // Cache tool check results (tools don't change during a session)
 let toolsCache = null
 
-function checkTool(tool) {
+async function checkTool(tool) {
   try {
-    execSync(`where ${tool.cmd}`, { stdio: "ignore" })
+    await exec(`where ${tool.cmd}`)
     return true
   } catch {
     try {
-      const out = execSync(`winget list --id ${tool.winget} --accept-source-agreements`, { encoding: "utf-8" })
-      return out.includes(tool.winget)
+      const { stdout } = await exec(`winget list --id ${tool.winget} --accept-source-agreements`)
+      return stdout.includes(tool.winget)
     } catch {
       return false
     }
   }
 }
 
-function getTools() {
+async function getTools() {
   if (!toolsCache) {
-    toolsCache = (config.tools || []).map((t) => ({
-      name: t.name,
-      installed: checkTool(t),
-    }))
+    const tools = config.tools || []
+    toolsCache = await Promise.all(
+      tools.map(async (t) => ({
+        name: t.name,
+        installed: await checkTool(t),
+      }))
+    )
   }
   return toolsCache
+}
+
+function getToolNames() {
+  return (config.tools || []).map((t) => t.name)
 }
 
 function getRepos() {
@@ -74,17 +84,25 @@ function createWindow() {
 }
 
 // IPC handlers
-ipcMain.handle("get-data", () => {
-  return { tools: getTools(), repos: getRepos() }
+ipcMain.handle("get-data", async () => {
+  return { tools: await getTools(), repos: getRepos() }
 })
 
 ipcMain.handle("get-repos", () => {
   return getRepos()
 })
 
-ipcMain.handle("refresh-tools", () => {
+ipcMain.handle("get-tool-names", () => {
+  return getToolNames()
+})
+
+ipcMain.handle("get-tools", async () => {
+  return await getTools()
+})
+
+ipcMain.handle("refresh-tools", async () => {
   toolsCache = null
-  return getTools()
+  return await getTools()
 })
 
 ipcMain.handle("run-project", (_, name) => {
@@ -131,13 +149,43 @@ ipcMain.handle("stop-project", (_, name) => {
 })
 
 ipcMain.handle("sync-all", () => {
-  try {
+  return new Promise((resolve) => {
     const devupPath = path.join(__dirname, "..", "devup.js")
-    execSync(`node "${devupPath}"`, { stdio: "ignore" })
-    return { ok: true }
-  } catch (err) {
-    return { ok: false, error: err.message }
-  }
+    const child = spawn("node", [devupPath], {
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
+    })
+
+    child.stdout.on("data", (data) => {
+      const lines = data.toString().split("\n").filter((l) => l.trim())
+      for (const line of lines) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("sync-progress", line)
+        }
+      }
+    })
+
+    child.stderr.on("data", (data) => {
+      const lines = data.toString().split("\n").filter((l) => l.trim())
+      for (const line of lines) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("sync-progress", line)
+        }
+      }
+    })
+
+    child.on("exit", (code) => {
+      if (code === 0) {
+        resolve({ ok: true })
+      } else {
+        resolve({ ok: false, error: `Process exited with code ${code}` })
+      }
+    })
+
+    child.on("error", (err) => {
+      resolve({ ok: false, error: err.message })
+    })
+  })
 })
 
 app.whenReady().then(createWindow)
