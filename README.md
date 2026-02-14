@@ -3,7 +3,7 @@
 Rebuild your entire dev environment with one command.
 
 ```
-node devup.js
+devup
 ```
 
 New machine? Run once, go grab a coffee, come back — everything's ready.
@@ -16,17 +16,21 @@ New machine? Run once, go grab a coffee, come back — everything's ready.
 
 Idempotent. Run it 100 times, same result. No wasted time.
 
-## Quick Start
+## Install
 
 ```bash
-# Generate a sample config
-node devup.js --init
+npm link
+```
 
-# Edit the config
-# ~/.devup/dev.config.json
+Now `devup` is available globally.
 
-# Run it
-node devup.js
+## Usage
+
+```bash
+devup                  # Full setup (install tools + clone/pull repos)
+devup --init           # Generate sample config at ~/.devup/
+devup --list           # List all launchable projects
+devup --run <name>     # Launch a project (e.g. devup --run RePic)
 ```
 
 ## Config
@@ -49,7 +53,8 @@ node devup.js
       "name": "my-project",
       "url": "https://github.com/you/my-project.git",
       "branch": "main",
-      "postInstall": "npm install"
+      "postInstall": "npm install",
+      "run": "npm run dev"
     }
   ]
 }
@@ -71,8 +76,22 @@ node devup.js
 | `url` | Git clone URL |
 | `branch` | Branch to checkout (optional) |
 | `postInstall` | Command to run after clone/pull (optional) |
+| `run` | Command for `devup --run` to launch the project (optional). Projects without `run` won't appear in `--list` |
 
-## Example output
+## Example: `devup --list`
+
+```
+可啟動的專案：
+
+  PyClick              → python tray_clicker.py
+  RePic                → npm run dev
+  ReVid                → npm run dev
+  ClaudeBot            → npm run dev
+  CloudPipe            → npm start
+  Screenshot-OCR       → npm run dev
+```
+
+## Example: `devup`
 
 ```
 🔧 Phase 1: Checking system tools...
