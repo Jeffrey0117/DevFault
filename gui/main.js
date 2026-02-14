@@ -31,8 +31,10 @@ function checkTool(tool) {
   }
 }
 
+let mainWindow = null
+
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 520,
     height: 600,
     resizable: false,
@@ -41,8 +43,8 @@ function createWindow() {
       contextIsolation: false,
     },
   })
-  win.setMenuBarVisibility(false)
-  win.loadFile(path.join(__dirname, "index.html"))
+  mainWindow.setMenuBarVisibility(false)
+  mainWindow.loadFile(path.join(__dirname, "index.html"))
 }
 
 // IPC handlers
@@ -69,11 +71,19 @@ ipcMain.handle("run-project", (_, name) => {
   if (running[name]) return { ok: false, error: "Already running" }
 
   const target = path.join(baseDir, repo.name)
-  const child = spawn(repo.run, { cwd: target, shell: true, stdio: "ignore" })
+  const child = spawn("cmd.exe", ["/c", repo.run], {
+    cwd: target,
+    stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
+    windowsHide: true,
+  })
   running[name] = child
 
   child.on("exit", () => {
     delete running[name]
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("status-changed")
+    }
   })
 
   return { ok: true }
@@ -81,7 +91,9 @@ ipcMain.handle("run-project", (_, name) => {
 
 ipcMain.handle("stop-project", (_, name) => {
   if (!running[name]) return { ok: false }
-  running[name].kill()
+  try {
+    execSync(`taskkill /PID ${running[name].pid} /T /F`, { stdio: "ignore" })
+  } catch {}
   delete running[name]
   return { ok: true }
 })
@@ -98,9 +110,10 @@ ipcMain.handle("sync-all", () => {
 
 app.whenReady().then(createWindow)
 app.on("window-all-closed", () => {
-  // Kill all running processes
   for (const name of Object.keys(running)) {
-    running[name].kill()
+    try {
+      execSync(`taskkill /PID ${running[name].pid} /T /F`, { stdio: "ignore" })
+    } catch {}
   }
   app.quit()
 })

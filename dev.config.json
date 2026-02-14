@@ -19,13 +19,13 @@
       "name": "RePic",
       "url": "https://github.com/Jeffrey0117/RePic.git",
       "postInstall": "npm install",
-      "run": "npm run dev"
+      "run": "npm run electron:dev"
     },
     {
       "name": "ReVid",
       "url": "https://github.com/Jeffrey0117/ReVid.git",
       "postInstall": "npm install",
-      "run": "npm run dev"
+      "run": "npm run electron:dev"
     },
     {
       "name": "Ytify",

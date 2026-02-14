@@ -6,123 +6,197 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e0e0e0;
-      padding: 24px;
+      font-family: 'Segoe UI', -apple-system, sans-serif;
+      background: #121212;
+      color: #c9cdd3;
+      padding: 28px 24px;
       user-select: none;
     }
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      color: #fff;
-    }
-    h1 span { color: #7c83ff; }
 
-    /* Tools section */
-    .tools-bar {
-      background: #16213e;
-      border-radius: 10px;
-      padding: 14px 18px;
-      margin-bottom: 20px;
+    /* Header */
+    .header {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 22px;
     }
-    .tools-bar .label {
-      font-size: 13px;
-      color: #888;
-      margin-right: 6px;
+    .header h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #e0c37e, #d4a054);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header .version {
+      font-size: 11px;
+      color: #444;
+      font-weight: 500;
+    }
+
+    /* Tools */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #555;
+      margin-bottom: 10px;
+    }
+    .tools-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
     }
     .tool-chip {
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      background: #0f3460;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 6px;
+      letter-spacing: 0.3px;
     }
-    .tool-chip.ok { background: #1b4332; color: #95d5b2; }
-    .tool-chip.missing { background: #5c1a1a; color: #f5a3a3; }
+    .tool-chip.ok {
+      background: rgba(72, 187, 120, 0.12);
+      color: #48bb78;
+      border: 1px solid rgba(72, 187, 120, 0.2);
+    }
+    .tool-chip.missing {
+      background: rgba(229, 62, 62, 0.12);
+      color: #fc8181;
+      border: 1px solid rgba(229, 62, 62, 0.2);
+    }
 
     /* Repos */
-    .repo-list { display: flex; flex-direction: column; gap: 8px; }
+    .repo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
     .repo-card {
-      background: #16213e;
+      background: #1a1a1a;
+      border: 1px solid #252525;
       border-radius: 10px;
-      padding: 14px 18px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      transition: border-color 0.2s, background 0.2s;
     }
-    .repo-info { display: flex; flex-direction: column; gap: 2px; }
-    .repo-name { font-size: 15px; font-weight: 600; color: #fff; }
-    .repo-cmd { font-size: 12px; color: #666; font-family: monospace; }
-
-    .btn {
-      border: none;
-      border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s;
+    .repo-card:hover {
+      border-color: #333;
+      background: #1e1e1e;
     }
-    .btn:hover { opacity: 0.85; }
-    .btn:active { opacity: 0.7; }
-    .btn-run { background: #7c83ff; color: #fff; }
-    .btn-stop { background: #e53e3e; color: #fff; }
-    .btn-disabled {
-      background: #2a2a4a;
-      color: #555;
-      cursor: default;
-    }
-    .btn-disabled:hover { opacity: 1; }
-
-    .not-cloned {
-      font-size: 12px;
-      color: #f5a3a3;
-      padding: 8px 0;
+    .repo-card.is-running {
+      border-color: rgba(72, 187, 120, 0.3);
+      background: rgba(72, 187, 120, 0.04);
     }
 
-    /* Sync button */
-    .sync-bar {
-      margin-top: 20px;
-      text-align: center;
-    }
-    .btn-sync {
-      background: #0f3460;
-      color: #7c83ff;
-      border: 1px solid #7c83ff;
-      border-radius: 10px;
-      padding: 10px 32px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn-sync:hover { background: #7c83ff; color: #fff; }
-    .btn-sync:disabled { opacity: 0.4; cursor: default; }
-
+    .repo-info { display: flex; align-items: center; gap: 10px; }
     .status-dot {
-      display: inline-block;
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      margin-right: 8px;
+      flex-shrink: 0;
     }
-    .status-dot.running { background: #48bb78; animation: pulse 1.5s infinite; }
-    .status-dot.stopped { background: #555; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .status-dot.running {
+      background: #48bb78;
+      box-shadow: 0 0 8px rgba(72, 187, 120, 0.5);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .status-dot.stopped { background: #333; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(72, 187, 120, 0.5); }
+      50% { opacity: 0.5; box-shadow: 0 0 4px rgba(72, 187, 120, 0.2); }
+    }
+
+    .repo-text { display: flex; flex-direction: column; gap: 1px; }
+    .repo-name { font-size: 14px; font-weight: 600; color: #e2e4e8; }
+    .repo-cmd {
+      font-size: 11px;
+      color: #4a4a5a;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    .tag-no-run {
+      font-size: 10px;
+      color: #444;
+      font-style: italic;
+    }
+    .tag-not-cloned {
+      font-size: 10px;
+      color: #fc8181;
+    }
+
+    /* Buttons */
+    .btn {
+      border: none;
+      border-radius: 7px;
+      padding: 7px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.3px;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-run {
+      background: linear-gradient(135deg, #d4a054, #c08a3e);
+      color: #fff;
+    }
+    .btn-run:hover { background: linear-gradient(135deg, #e0b06a, #d4a054); }
+    .btn-stop {
+      background: rgba(229, 62, 62, 0.15);
+      color: #fc8181;
+      border: 1px solid rgba(229, 62, 62, 0.25);
+    }
+    .btn-stop:hover { background: rgba(229, 62, 62, 0.25); }
+    .btn-disabled {
+      background: transparent;
+      color: #333;
+      cursor: default;
+    }
+    .btn-disabled:active { transform: none; }
+
+    /* Footer */
+    .footer {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .btn-sync {
+      background: transparent;
+      color: #d4a054;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 9px 36px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .btn-sync:hover {
+      background: rgba(212, 160, 84, 0.1);
+      border-color: rgba(212, 160, 84, 0.3);
+    }
+    .btn-sync:active { transform: scale(0.97); }
+    .btn-sync:disabled { opacity: 0.3; cursor: default; transform: none; }
   </style>
 </head>
 <body>
-  <h1><span>devup</span></h1>
-  <div class="tools-bar" id="tools-bar">
-    <span class="label">Tools</span>
+  <div class="header">
+    <h1>devup</h1>
+    <span class="version">v1.0.0</span>
   </div>
+
+  <div class="section-label">TOOLS</div>
+  <div class="tools-bar" id="tools-bar"></div>
+
+  <div class="section-label">PROJECTS</div>
   <div class="repo-list" id="repo-list"></div>
-  <div class="sync-bar">
+
+  <div class="footer">
     <button class="btn-sync" id="sync-btn" onclick="syncAll()">Sync All</button>
   </div>
 
@@ -134,7 +208,7 @@
 
       // Tools
       const bar = document.getElementById("tools-bar")
-      bar.innerHTML = '<span class="label">Tools</span>'
+      bar.innerHTML = ""
       for (const t of tools) {
         const chip = document.createElement("span")
         chip.className = `tool-chip ${t.installed ? "ok" : "missing"}`
@@ -147,34 +221,46 @@
       list.innerHTML = ""
       for (const r of repos) {
         const card = document.createElement("div")
-        card.className = "repo-card"
+        card.className = "repo-card" + (r.running ? " is-running" : "")
 
         if (!r.cloned) {
           card.innerHTML = `
             <div class="repo-info">
-              <div class="repo-name">${r.name}</div>
-              <div class="not-cloned">not cloned</div>
+              <span class="status-dot stopped"></span>
+              <div class="repo-text">
+                <span class="repo-name">${r.name}</span>
+                <span class="tag-not-cloned">not cloned</span>
+              </div>
             </div>
             <button class="btn btn-disabled" disabled>--</button>`
         } else if (!r.run) {
           card.innerHTML = `
             <div class="repo-info">
-              <div class="repo-name">${r.name}</div>
-              <div class="repo-cmd">no run command</div>
+              <span class="status-dot stopped"></span>
+              <div class="repo-text">
+                <span class="repo-name">${r.name}</span>
+                <span class="tag-no-run">no run command</span>
+              </div>
             </div>
             <button class="btn btn-disabled" disabled>--</button>`
         } else if (r.running) {
           card.innerHTML = `
             <div class="repo-info">
-              <div class="repo-name"><span class="status-dot running"></span>${r.name}</div>
-              <div class="repo-cmd">${r.run}</div>
+              <span class="status-dot running"></span>
+              <div class="repo-text">
+                <span class="repo-name">${r.name}</span>
+                <span class="repo-cmd">${r.run}</span>
+              </div>
             </div>
             <button class="btn btn-stop" onclick="stop('${r.name}')">Stop</button>`
         } else {
           card.innerHTML = `
             <div class="repo-info">
-              <div class="repo-name"><span class="status-dot stopped"></span>${r.name}</div>
-              <div class="repo-cmd">${r.run}</div>
+              <span class="status-dot stopped"></span>
+              <div class="repo-text">
+                <span class="repo-name">${r.name}</span>
+                <span class="repo-cmd">${r.run}</span>
+              </div>
             </div>
             <button class="btn btn-run" onclick="run('${r.name}')">Run</button>`
         }
@@ -201,6 +287,9 @@
       btn.disabled = false
       load()
     }
+
+    // Auto-refresh when a process exits
+    ipcRenderer.on("status-changed", () => load())
 
     load()
   </script>
