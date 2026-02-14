@@ -4,11 +4,58 @@
   <meta charset="UTF-8">
   <title>devup</title>
   <style>
+    :root {
+      --bg-body: #121212;
+      --bg-card: #1a1a1a;
+      --bg-card-hover: #1e1e1e;
+      --bg-elevated: #252525;
+      --text-primary: #e2e4e8;
+      --text-secondary: #c9cdd3;
+      --text-muted: #555;
+      --text-dim: #444;
+      --border: #252525;
+      --border-hover: #333;
+      --accent: #d4a054;
+      --accent-light: #e0c37e;
+      --code-color: #4a4a5a;
+      --btn-disabled-color: #333;
+      --overlay-bg: rgba(0,0,0,0.75);
+      --success: #48bb78;
+      --success-bg: rgba(72, 187, 120, 0.12);
+      --success-border: rgba(72, 187, 120, 0.2);
+      --danger: #fc8181;
+      --danger-bg: rgba(229, 62, 62, 0.12);
+      --danger-border: rgba(229, 62, 62, 0.2);
+    }
+    [data-theme="light"] {
+      --bg-body: #f5f5f7;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f9f9fb;
+      --bg-elevated: #e8e8ec;
+      --text-primary: #1a1a1a;
+      --text-secondary: #333;
+      --text-muted: #999;
+      --text-dim: #bbb;
+      --border: #e0e0e0;
+      --border-hover: #ccc;
+      --accent: #b8862d;
+      --accent-light: #d4a054;
+      --code-color: #888;
+      --btn-disabled-color: #ccc;
+      --overlay-bg: rgba(0,0,0,0.4);
+      --success: #2f855a;
+      --success-bg: rgba(47, 133, 90, 0.1);
+      --success-border: rgba(47, 133, 90, 0.2);
+      --danger: #e53e3e;
+      --danger-bg: rgba(229, 62, 62, 0.08);
+      --danger-border: rgba(229, 62, 62, 0.15);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', -apple-system, sans-serif;
-      background: #121212;
-      color: #c9cdd3;
+      background: var(--bg-body);
+      color: var(--text-secondary);
       padding: 28px 24px;
       user-select: none;
     }
@@ -24,7 +71,7 @@
       font-size: 24px;
       font-weight: 800;
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #e0c37e, #d4a054);
+      background: linear-gradient(135deg, var(--accent-light), var(--accent));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -35,21 +82,21 @@
     }
     .header .version {
       font-size: 11px;
-      color: #444;
+      color: var(--text-dim);
       font-weight: 500;
     }
     .lang-toggle {
       font-size: 11px;
-      color: #555;
-      background: #1a1a1a;
-      border: 1px solid #333;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border-hover);
       border-radius: 5px;
       padding: 3px 8px;
       cursor: pointer;
       transition: all 0.15s;
       font-weight: 600;
     }
-    .lang-toggle:hover { color: #d4a054; border-color: #d4a054; }
+    .lang-toggle:hover { color: var(--accent); border-color: var(--accent); }
 
     /* Tools */
     .section-label {
@@ -57,7 +104,7 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 1.2px;
-      color: #555;
+      color: var(--text-muted);
       margin-bottom: 10px;
     }
     .tools-bar {
@@ -74,19 +121,19 @@
       letter-spacing: 0.3px;
     }
     .tool-chip.ok {
-      background: rgba(72, 187, 120, 0.12);
-      color: #48bb78;
-      border: 1px solid rgba(72, 187, 120, 0.2);
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid var(--success-border);
     }
     .tool-chip.missing {
-      background: rgba(229, 62, 62, 0.12);
-      color: #fc8181;
-      border: 1px solid rgba(229, 62, 62, 0.2);
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid var(--danger-border);
     }
     .tool-chip.checking {
-      background: #1e1e1e;
-      color: #555;
-      border: 1px solid #2a2a2a;
+      background: var(--bg-card-hover);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
       position: relative;
       overflow: hidden;
     }
@@ -110,8 +157,8 @@
       gap: 6px;
     }
     .repo-card {
-      background: #1a1a1a;
-      border: 1px solid #252525;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: 10px;
       padding: 12px 16px;
       display: flex;
@@ -120,8 +167,8 @@
       transition: border-color 0.2s, background 0.2s;
     }
     .repo-card:hover {
-      border-color: #333;
-      background: #1e1e1e;
+      border-color: var(--border-hover);
+      background: var(--bg-card-hover);
     }
     .repo-card.is-running {
       border-color: rgba(72, 187, 120, 0.3);
@@ -136,20 +183,20 @@
       border-radius: 8px;
       object-fit: cover;
       flex-shrink: 0;
-      background: #252525;
+      background: var(--bg-elevated);
     }
     .repo-icon-fallback {
       width: 36px;
       height: 36px;
       border-radius: 8px;
       flex-shrink: 0;
-      background: #252525;
+      background: var(--bg-elevated);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 16px;
       font-weight: 700;
-      color: #555;
+      color: var(--text-muted);
     }
 
     .status-dot {
@@ -163,28 +210,28 @@
       box-shadow: 0 0 8px rgba(72, 187, 120, 0.5);
       animation: pulse 2s ease-in-out infinite;
     }
-    .status-dot.stopped { background: #333; }
+    .status-dot.stopped { background: var(--border-hover); }
     @keyframes pulse {
       0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(72, 187, 120, 0.5); }
       50% { opacity: 0.5; box-shadow: 0 0 4px rgba(72, 187, 120, 0.2); }
     }
 
     .repo-text { display: flex; flex-direction: column; gap: 1px; }
-    .repo-name { font-size: 14px; font-weight: 600; color: #e2e4e8; }
+    .repo-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
     .repo-cmd {
       font-size: 11px;
-      color: #4a4a5a;
+      color: var(--code-color);
       font-family: 'Cascadia Code', 'Fira Code', monospace;
     }
 
     .tag-no-run {
       font-size: 10px;
-      color: #444;
+      color: var(--text-dim);
       font-style: italic;
     }
     .tag-not-cloned {
       font-size: 10px;
-      color: #fc8181;
+      color: var(--danger);
     }
 
     /* Buttons */
@@ -205,14 +252,14 @@
     }
     .btn-run:hover { background: linear-gradient(135deg, #e0b06a, #d4a054); }
     .btn-stop {
-      background: rgba(229, 62, 62, 0.15);
-      color: #fc8181;
-      border: 1px solid rgba(229, 62, 62, 0.25);
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid var(--danger-border);
     }
     .btn-stop:hover { background: rgba(229, 62, 62, 0.25); }
     .btn-disabled {
       background: transparent;
-      color: #333;
+      color: var(--btn-disabled-color);
       cursor: default;
     }
     .btn-disabled:active { transform: none; }
@@ -225,8 +272,8 @@
     }
     .btn-sync {
       background: transparent;
-      color: #d4a054;
-      border: 1px solid #333;
+      color: var(--accent);
+      border: 1px solid var(--border-hover);
       border-radius: 8px;
       padding: 9px 36px;
       font-size: 13px;
@@ -247,7 +294,7 @@
       display: none;
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
+      background: var(--overlay-bg);
       z-index: 100;
       flex-direction: column;
       align-items: center;
@@ -260,8 +307,8 @@
     .loading-spinner {
       width: 32px;
       height: 32px;
-      border: 3px solid #333;
-      border-top-color: #d4a054;
+      border: 3px solid var(--border-hover);
+      border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -271,19 +318,19 @@
     .loading-text {
       font-size: 14px;
       font-weight: 600;
-      color: #d4a054;
+      color: var(--accent);
     }
     .loading-log {
       width: 80%;
       max-height: 200px;
       overflow-y: auto;
-      background: #1a1a1a;
-      border: 1px solid #333;
+      background: var(--bg-card);
+      border: 1px solid var(--border-hover);
       border-radius: 8px;
       padding: 12px;
       font-family: 'Cascadia Code', 'Fira Code', monospace;
       font-size: 11px;
-      color: #888;
+      color: var(--code-color);
       line-height: 1.6;
       white-space: pre-wrap;
       word-break: break-all;
@@ -301,6 +348,7 @@
     <h1>devup</h1>
     <div class="header-right">
       <span class="version">v1.0.0</span>
+      <button class="lang-toggle" id="theme-btn" onclick="toggleTheme()">☀</button>
       <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">EN</button>
     </div>
   </div>
@@ -352,9 +400,25 @@
     }
 
     let lang = localStorage.getItem("devup-lang") || "zh"
+    let theme = localStorage.getItem("devup-theme") || "dark"
     let cachedTools = null
 
     function t(key) { return i18n[lang][key] }
+
+    function applyTheme() {
+      if (theme === "light") {
+        document.documentElement.setAttribute("data-theme", "light")
+      } else {
+        document.documentElement.removeAttribute("data-theme")
+      }
+      document.getElementById("theme-btn").textContent = theme === "light" ? "☾" : "☀"
+    }
+
+    function toggleTheme() {
+      theme = theme === "light" ? "dark" : "light"
+      localStorage.setItem("devup-theme", theme)
+      applyTheme()
+    }
 
     function applyLang() {
       document.getElementById("label-tools").textContent = t("tools")
@@ -535,6 +599,7 @@
     // Auto-refresh when a process exits — fast path
     ipcRenderer.on("status-changed", () => renderRepos())
 
+    applyTheme()
     applyLang()
     fullLoad()
   </script>
