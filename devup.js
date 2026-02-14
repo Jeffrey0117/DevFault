@@ -5,10 +5,11 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 
-const args = process.argv.slice(2)
+const cmd = process.argv[2]
+const cmdArg = process.argv[3]
 
-// --init：產生範例 config 到 ~/.devup/
-if (args.includes("--init")) {
+// init：產生範例 config 到 ~/.devup/
+if (cmd === "init" || cmd === "--init") {
   const initDir = path.join(os.homedir(), ".devup")
   const initPath = path.join(initDir, "dev.config.json")
 
@@ -60,8 +61,8 @@ if (!configPath) {
 const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
 const baseDir = path.resolve(config.baseDir.replace("~", os.homedir()))
 
-// --list：列出所有可啟動的專案
-if (args.includes("--list")) {
+// ls：列出所有可啟動的專案
+if (cmd === "ls" || cmd === "--list") {
   const runnable = config.repos.filter((r) => r.run)
   if (runnable.length === 0) {
     console.log("沒有設定 run 指令的專案")
@@ -75,12 +76,11 @@ if (args.includes("--list")) {
   process.exit(0)
 }
 
-// --run <name>：啟動專案
-const runIdx = args.indexOf("--run")
-if (runIdx !== -1) {
-  const name = args[runIdx + 1]
+// run <name>：啟動專案
+if (cmd === "run" || cmd === "--run") {
+  const name = cmdArg
   if (!name) {
-    console.error("❌ 請指定專案名稱：devup --run <name>")
+    console.error("❌ 請指定專案名稱：devup run <name>")
     process.exit(1)
   }
 

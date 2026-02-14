@@ -27,10 +27,10 @@ Now `devup` is available globally.
 ## Usage
 
 ```bash
-devup                  # Full setup (install tools + clone/pull repos)
-devup --init           # Generate sample config at ~/.devup/
-devup --list           # List all launchable projects
-devup --run <name>     # Launch a project (e.g. devup --run RePic)
+devup              # Full setup (install tools + clone/pull repos)
+devup init         # Generate sample config at ~/.devup/
+devup ls           # List all launchable projects
+devup run <name>   # Launch a project (e.g. devup run RePic)
 ```
 
 ## Config
@@ -76,9 +76,22 @@ devup --run <name>     # Launch a project (e.g. devup --run RePic)
 | `url` | Git clone URL |
 | `branch` | Branch to checkout (optional) |
 | `postInstall` | Command to run after clone/pull (optional) |
-| `run` | Command for `devup --run` to launch the project (optional). Projects without `run` won't appear in `--list` |
+| `run` | Command for `devup run` to launch the project (optional). Projects without `run` won't appear in `devup ls` |
 
-## Example: `devup --list`
+## GUI
+
+devup also comes with an Electron desktop app for visual project launching.
+
+```bash
+cd gui && npm install && npm start
+```
+
+Features:
+- Tools status at a glance
+- One-click Run / Stop for each project
+- Sync All button to pull all repos
+
+## Example: `devup ls`
 
 ```
 可啟動的專案：

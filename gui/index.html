@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>devup</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 24px;
+      user-select: none;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+    h1 span { color: #7c83ff; }
+
+    /* Tools section */
+    .tools-bar {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tools-bar .label {
+      font-size: 13px;
+      color: #888;
+      margin-right: 6px;
+    }
+    .tool-chip {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: #0f3460;
+    }
+    .tool-chip.ok { background: #1b4332; color: #95d5b2; }
+    .tool-chip.missing { background: #5c1a1a; color: #f5a3a3; }
+
+    /* Repos */
+    .repo-list { display: flex; flex-direction: column; gap: 8px; }
+    .repo-card {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .repo-info { display: flex; flex-direction: column; gap: 2px; }
+    .repo-name { font-size: 15px; font-weight: 600; color: #fff; }
+    .repo-cmd { font-size: 12px; color: #666; font-family: monospace; }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:active { opacity: 0.7; }
+    .btn-run { background: #7c83ff; color: #fff; }
+    .btn-stop { background: #e53e3e; color: #fff; }
+    .btn-disabled {
+      background: #2a2a4a;
+      color: #555;
+      cursor: default;
+    }
+    .btn-disabled:hover { opacity: 1; }
+
+    .not-cloned {
+      font-size: 12px;
+      color: #f5a3a3;
+      padding: 8px 0;
+    }
+
+    /* Sync button */
+    .sync-bar {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .btn-sync {
+      background: #0f3460;
+      color: #7c83ff;
+      border: 1px solid #7c83ff;
+      border-radius: 10px;
+      padding: 10px 32px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-sync:hover { background: #7c83ff; color: #fff; }
+    .btn-sync:disabled { opacity: 0.4; cursor: default; }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .status-dot.running { background: #48bb78; animation: pulse 1.5s infinite; }
+    .status-dot.stopped { background: #555; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+</head>
+<body>
+  <h1><span>devup</span></h1>
+  <div class="tools-bar" id="tools-bar">
+    <span class="label">Tools</span>
+  </div>
+  <div class="repo-list" id="repo-list"></div>
+  <div class="sync-bar">
+    <button class="btn-sync" id="sync-btn" onclick="syncAll()">Sync All</button>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require("electron")
+
+    async function load() {
+      const { tools, repos } = await ipcRenderer.invoke("get-data")
+
+      // Tools
+      const bar = document.getElementById("tools-bar")
+      bar.innerHTML = '<span class="label">Tools</span>'
+      for (const t of tools) {
+        const chip = document.createElement("span")
+        chip.className = `tool-chip ${t.installed ? "ok" : "missing"}`
+        chip.textContent = t.name
+        bar.appendChild(chip)
+      }
+
+      // Repos
+      const list = document.getElementById("repo-list")
+      list.innerHTML = ""
+      for (const r of repos) {
+        const card = document.createElement("div")
+        card.className = "repo-card"
+
+        if (!r.cloned) {
+          card.innerHTML = `
+            <div class="repo-info">
+              <div class="repo-name">${r.name}</div>
+              <div class="not-cloned">not cloned</div>
+            </div>
+            <button class="btn btn-disabled" disabled>--</button>`
+        } else if (!r.run) {
+          card.innerHTML = `
+            <div class="repo-info">
+              <div class="repo-name">${r.name}</div>
+              <div class="repo-cmd">no run command</div>
+            </div>
+            <button class="btn btn-disabled" disabled>--</button>`
+        } else if (r.running) {
+          card.innerHTML = `
+            <div class="repo-info">
+              <div class="repo-name"><span class="status-dot running"></span>${r.name}</div>
+              <div class="repo-cmd">${r.run}</div>
+            </div>
+            <button class="btn btn-stop" onclick="stop('${r.name}')">Stop</button>`
+        } else {
+          card.innerHTML = `
+            <div class="repo-info">
+              <div class="repo-name"><span class="status-dot stopped"></span>${r.name}</div>
+              <div class="repo-cmd">${r.run}</div>
+            </div>
+            <button class="btn btn-run" onclick="run('${r.name}')">Run</button>`
+        }
+        list.appendChild(card)
+      }
+    }
+
+    async function run(name) {
+      await ipcRenderer.invoke("run-project", name)
+      load()
+    }
+
+    async function stop(name) {
+      await ipcRenderer.invoke("stop-project", name)
+      load()
+    }
+
+    async function syncAll() {
+      const btn = document.getElementById("sync-btn")
+      btn.disabled = true
+      btn.textContent = "Syncing..."
+      await ipcRenderer.invoke("sync-all")
+      btn.textContent = "Sync All"
+      btn.disabled = false
+      load()
+    }
+
+    load()
+  </script>
+</body>
+</html>
