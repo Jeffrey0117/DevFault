@@ -13,24 +13,28 @@
       "name": "PyClick",
       "url": "https://github.com/Jeffrey0117/PyClick.git",
       "postInstall": "pip install -r requirements.txt",
-      "run": "python tray_clicker.py"
+      "run": "python tray_clicker.py",
+      "logo": "logo.png"
     },
     {
       "name": "RePic",
       "url": "https://github.com/Jeffrey0117/RePic.git",
       "postInstall": "npm install",
-      "run": "npm run electron:dev"
+      "run": "npm run electron:dev",
+      "logo": "repic-logo.png"
     },
     {
       "name": "ReVid",
       "url": "https://github.com/Jeffrey0117/ReVid.git",
       "postInstall": "npm install",
-      "run": "npm run electron:dev"
+      "run": "npm run electron:dev",
+      "logo": "revid.png"
     },
     {
       "name": "Ytify",
       "url": "https://github.com/Jeffrey0117/Ytify.git",
-      "run": "python app.py"
+      "run": "python app.py",
+      "logo": "static/logo.png"
     },
     {
       "name": "winbat",
@@ -46,13 +50,15 @@
       "name": "CloudPipe",
       "url": "https://github.com/Jeffrey0117/CloudPipe.git",
       "postInstall": "npm install",
-      "run": "npm start"
+      "run": "npm start",
+      "logo": "LOGO.png"
     },
     {
       "name": "Screenshot-OCR",
       "url": "https://github.com/Jeffrey0117/Screenshot-OCR.git",
       "postInstall": "npm install",
-      "run": "npm run dev"
+      "run": "npm run dev",
+      "logo": "mainpic.png"
     }
   ]
 }

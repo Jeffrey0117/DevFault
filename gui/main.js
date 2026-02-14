@@ -54,12 +54,16 @@ ipcMain.handle("get-data", () => {
     installed: checkTool(t),
   }))
 
-  const repos = config.repos.map((r) => ({
-    name: r.name,
-    run: r.run || null,
-    cloned: fs.existsSync(path.join(baseDir, r.name, ".git")),
-    running: !!running[r.name],
-  }))
+  const repos = config.repos.map((r) => {
+    const logoPath = r.logo ? path.join(baseDir, r.name, r.logo) : null
+    return {
+      name: r.name,
+      run: r.run || null,
+      cloned: fs.existsSync(path.join(baseDir, r.name, ".git")),
+      running: !!running[r.name],
+      logo: logoPath && fs.existsSync(logoPath) ? logoPath : null,
+    }
+  })
 
   return { tools, repos }
 })
