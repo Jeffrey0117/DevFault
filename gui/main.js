@@ -82,13 +82,16 @@ ipcMain.handle("run-project", (_, name) => {
   })
   running[name] = child
 
+  let stdoutLog = ""
   let stderrLog = ""
+  child.stdout.on("data", (d) => { stdoutLog += d.toString() })
   child.stderr.on("data", (d) => { stderrLog += d.toString() })
 
   child.on("exit", (code) => {
     delete running[name]
     if (code !== 0 && code !== null) {
       console.error(`[${name}] exited with code ${code}`)
+      if (stdoutLog) console.error(`[${name}] stdout: ${stdoutLog}`)
       if (stderrLog) console.error(`[${name}] stderr: ${stderrLog}`)
     }
     if (mainWindow && !mainWindow.isDestroyed()) {
