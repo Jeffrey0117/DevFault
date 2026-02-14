@@ -252,6 +252,8 @@
         projects: "專案",
         run: "啟動",
         stop: "停止",
+        starting: "啟動中...",
+        stopping: "停止中...",
         syncAll: "同步全部",
         syncing: "同步中...",
         notCloned: "尚未下載",
@@ -263,6 +265,8 @@
         projects: "PROJECTS",
         run: "Run",
         stop: "Stop",
+        starting: "Starting...",
+        stopping: "Stopping...",
         syncAll: "Sync All",
         syncing: "Syncing...",
         notCloned: "not cloned",
@@ -272,6 +276,7 @@
     }
 
     let lang = localStorage.getItem("devup-lang") || "zh"
+    let cachedTools = null
 
     function t(key) { return i18n[lang][key] }
 
@@ -286,23 +291,21 @@
       lang = lang === "zh" ? "en" : "zh"
       localStorage.setItem("devup-lang", lang)
       applyLang()
-      load()
+      renderRepos()
     }
 
-    async function load() {
-      const { tools, repos } = await ipcRenderer.invoke("get-data")
-
-      // Tools
+    function renderTools(tools) {
       const bar = document.getElementById("tools-bar")
       bar.innerHTML = ""
-      for (const t of tools) {
+      for (const tool of tools) {
         const chip = document.createElement("span")
-        chip.className = `tool-chip ${t.installed ? "ok" : "missing"}`
-        chip.textContent = t.name
+        chip.className = `tool-chip ${tool.installed ? "ok" : "missing"}`
+        chip.textContent = tool.name
         bar.appendChild(chip)
       }
+    }
 
-      // Repos
+    function renderRepoList(repos) {
       const list = document.getElementById("repo-list")
       list.innerHTML = ""
       for (const r of repos) {
@@ -362,14 +365,37 @@
       }
     }
 
+    // Full load (tools + repos) — only on startup & after sync
+    async function fullLoad() {
+      const { tools, repos } = await ipcRenderer.invoke("get-data")
+      cachedTools = tools
+      renderTools(tools)
+      renderRepoList(repos)
+    }
+
+    // Fast refresh — repos only, no tool re-check
+    async function renderRepos() {
+      const repos = await ipcRenderer.invoke("get-repos")
+      if (cachedTools) renderTools(cachedTools)
+      renderRepoList(repos)
+    }
+
     async function run(name) {
-      await ipcRenderer.invoke("run-project", name)
-      load()
+      // Optimistic UI: disable button immediately
+      const btn = event.target
+      btn.disabled = true
+      btn.textContent = t("starting")
+      btn.className = "btn btn-disabled"
+      ipcRenderer.invoke("run-project", name).then(() => renderRepos())
     }
 
     async function stop(name) {
-      await ipcRenderer.invoke("stop-project", name)
-      load()
+      // Optimistic UI: disable button immediately
+      const btn = event.target
+      btn.disabled = true
+      btn.textContent = t("stopping")
+      btn.className = "btn btn-disabled"
+      ipcRenderer.invoke("stop-project", name).then(() => renderRepos())
     }
 
     async function syncAll() {
@@ -379,14 +405,15 @@
       await ipcRenderer.invoke("sync-all")
       btn.textContent = t("syncAll")
       btn.disabled = false
-      load()
+      // After sync, do full reload (repos might have been cloned, tools might have changed)
+      fullLoad()
     }
 
-    // Auto-refresh when a process exits
-    ipcRenderer.on("status-changed", () => load())
+    // Auto-refresh when a process exits — fast path
+    ipcRenderer.on("status-changed", () => renderRepos())
 
     applyLang()
-    load()
+    fullLoad()
   </script>
 </body>
 </html>

@@ -17,6 +17,9 @@ const baseDir = path.resolve(config.baseDir.replace("~", os.homedir()))
 // Track running processes
 const running = {}
 
+// Cache tool check results (tools don't change during a session)
+let toolsCache = null
+
 function checkTool(tool) {
   try {
     execSync(`where ${tool.cmd}`, { stdio: "ignore" })
@@ -29,6 +32,29 @@ function checkTool(tool) {
       return false
     }
   }
+}
+
+function getTools() {
+  if (!toolsCache) {
+    toolsCache = (config.tools || []).map((t) => ({
+      name: t.name,
+      installed: checkTool(t),
+    }))
+  }
+  return toolsCache
+}
+
+function getRepos() {
+  return config.repos.map((r) => {
+    const logoPath = r.logo ? path.join(baseDir, r.name, r.logo) : null
+    return {
+      name: r.name,
+      run: r.run || null,
+      cloned: fs.existsSync(path.join(baseDir, r.name, ".git")),
+      running: !!running[r.name],
+      logo: logoPath && fs.existsSync(logoPath) ? logoPath : null,
+    }
+  })
 }
 
 let mainWindow = null
@@ -49,23 +75,16 @@ function createWindow() {
 
 // IPC handlers
 ipcMain.handle("get-data", () => {
-  const tools = (config.tools || []).map((t) => ({
-    name: t.name,
-    installed: checkTool(t),
-  }))
+  return { tools: getTools(), repos: getRepos() }
+})
 
-  const repos = config.repos.map((r) => {
-    const logoPath = r.logo ? path.join(baseDir, r.name, r.logo) : null
-    return {
-      name: r.name,
-      run: r.run || null,
-      cloned: fs.existsSync(path.join(baseDir, r.name, ".git")),
-      running: !!running[r.name],
-      logo: logoPath && fs.existsSync(logoPath) ? logoPath : null,
-    }
-  })
+ipcMain.handle("get-repos", () => {
+  return getRepos()
+})
 
-  return { tools, repos }
+ipcMain.handle("refresh-tools", () => {
+  toolsCache = null
+  return getTools()
 })
 
 ipcMain.handle("run-project", (_, name) => {
