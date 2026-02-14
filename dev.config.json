@@ -1,0 +1,51 @@
+{
+  "baseDir": "~/workspace",
+  "tools": [
+    { "name": "git",    "cmd": "git",    "winget": "Git.Git" },
+    { "name": "node",   "cmd": "node",   "winget": "OpenJS.NodeJS.LTS" },
+    { "name": "python", "cmd": "python", "winget": "Python.Python.3.12" },
+    { "name": "gh",     "cmd": "gh",     "winget": "GitHub.cli" },
+    { "name": "docker", "cmd": "docker", "winget": "Docker.DockerDesktop" },
+    { "name": "ffmpeg", "cmd": "ffmpeg", "winget": "Gyan.FFmpeg" }
+  ],
+  "repos": [
+    {
+      "name": "PyClick",
+      "url": "https://github.com/Jeffrey0117/PyClick.git",
+      "postInstall": "pip install -r requirements.txt"
+    },
+    {
+      "name": "RePic",
+      "url": "https://github.com/Jeffrey0117/RePic.git",
+      "postInstall": "npm install"
+    },
+    {
+      "name": "ReVid",
+      "url": "https://github.com/Jeffrey0117/ReVid.git",
+      "postInstall": "npm install"
+    },
+    {
+      "name": "Ytify",
+      "url": "https://github.com/Jeffrey0117/Ytify.git"
+    },
+    {
+      "name": "winbat",
+      "url": "https://github.com/Jeffrey0117/winbat.git"
+    },
+    {
+      "name": "ClaudeBot",
+      "url": "https://github.com/Jeffrey0117/ClaudeBot.git",
+      "postInstall": "npm install"
+    },
+    {
+      "name": "CloudPipe",
+      "url": "https://github.com/Jeffrey0117/CloudPipe.git",
+      "postInstall": "npm install"
+    },
+    {
+      "name": "Screenshot-OCR",
+      "url": "https://github.com/Jeffrey0117/Screenshot-OCR.git",
+      "postInstall": "npm install"
+    }
+  ]
+}

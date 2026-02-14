@@ -1,0 +1,12 @@
+{
+  "name": "devup",
+  "version": "1.0.0",
+  "description": "Dev Bootstrap System - rebuild your dev universe with one command",
+  "type": "module",
+  "bin": {
+    "devup": "./devup.js"
+  },
+  "scripts": {
+    "start": "node devup.js"
+  }
+}
