@@ -74,13 +74,19 @@ ipcMain.handle("run-project", (_, name) => {
   const child = spawn("cmd.exe", ["/c", repo.run], {
     cwd: target,
     stdio: ["ignore", "pipe", "pipe"],
-    detached: true,
     windowsHide: true,
   })
   running[name] = child
 
-  child.on("exit", () => {
+  let stderrLog = ""
+  child.stderr.on("data", (d) => { stderrLog += d.toString() })
+
+  child.on("exit", (code) => {
     delete running[name]
+    if (code !== 0 && code !== null) {
+      console.error(`[${name}] exited with code ${code}`)
+      if (stderrLog) console.error(`[${name}] stderr: ${stderrLog}`)
+    }
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("status-changed")
     }
