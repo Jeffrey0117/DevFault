@@ -541,7 +541,6 @@
     }
 
     async function run(name) {
-      // Optimistic UI: disable button immediately
       const btn = event.target
       btn.disabled = true
       btn.textContent = t("starting")
@@ -550,7 +549,6 @@
     }
 
     async function stop(name) {
-      // Optimistic UI: disable button immediately
       const btn = event.target
       btn.disabled = true
       btn.textContent = t("stopping")
