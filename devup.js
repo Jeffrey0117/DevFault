@@ -5,8 +5,10 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 
+const args = process.argv.slice(2)
+
 // --init：產生範例 config 到 ~/.devup/
-if (process.argv.includes("--init")) {
+if (args.includes("--init")) {
   const initDir = path.join(os.homedir(), ".devup")
   const initPath = path.join(initDir, "dev.config.json")
 
@@ -55,10 +57,59 @@ if (!configPath) {
   process.exit(1)
 }
 
-console.log(`📄 Using config: ${configPath}\n`)
-
 const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
 const baseDir = path.resolve(config.baseDir.replace("~", os.homedir()))
+
+// --list：列出所有可啟動的專案
+if (args.includes("--list")) {
+  const runnable = config.repos.filter((r) => r.run)
+  if (runnable.length === 0) {
+    console.log("沒有設定 run 指令的專案")
+    process.exit(0)
+  }
+  console.log("\n可啟動的專案：\n")
+  for (const repo of runnable) {
+    console.log(`  ${repo.name.padEnd(20)} → ${repo.run}`)
+  }
+  console.log("")
+  process.exit(0)
+}
+
+// --run <name>：啟動專案
+const runIdx = args.indexOf("--run")
+if (runIdx !== -1) {
+  const name = args[runIdx + 1]
+  if (!name) {
+    console.error("❌ 請指定專案名稱：devup --run <name>")
+    process.exit(1)
+  }
+
+  const repo = config.repos.find((r) => r.name.toLowerCase() === name.toLowerCase())
+  if (!repo) {
+    console.error(`❌ 找不到專案：${name}`)
+    process.exit(1)
+  }
+  if (!repo.run) {
+    console.error(`❌ ${repo.name} 沒有設定 run 指令`)
+    process.exit(1)
+  }
+
+  const target = path.join(baseDir, repo.name)
+  if (!fs.existsSync(target)) {
+    console.error(`❌ 專案目錄不存在：${target}`)
+    console.error("   請先執行 devup 安裝")
+    process.exit(1)
+  }
+
+  console.log(`🚀 Starting ${repo.name}... (${repo.run})\n`)
+  try {
+    execSync(repo.run, { cwd: target, stdio: "inherit" })
+  } catch {}
+  process.exit(0)
+}
+
+// === Default: full setup ===
+console.log(`📄 Using config: ${configPath}\n`)
 
 if (!fs.existsSync(baseDir)) {
   fs.mkdirSync(baseDir, { recursive: true })

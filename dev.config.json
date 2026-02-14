@@ -12,21 +12,25 @@
     {
       "name": "PyClick",
       "url": "https://github.com/Jeffrey0117/PyClick.git",
-      "postInstall": "pip install -r requirements.txt"
+      "postInstall": "pip install -r requirements.txt",
+      "run": "python tray_clicker.py"
     },
     {
       "name": "RePic",
       "url": "https://github.com/Jeffrey0117/RePic.git",
-      "postInstall": "npm install"
+      "postInstall": "npm install",
+      "run": "npm run dev"
     },
     {
       "name": "ReVid",
       "url": "https://github.com/Jeffrey0117/ReVid.git",
-      "postInstall": "npm install"
+      "postInstall": "npm install",
+      "run": "npm run dev"
     },
     {
       "name": "Ytify",
-      "url": "https://github.com/Jeffrey0117/Ytify.git"
+      "url": "https://github.com/Jeffrey0117/Ytify.git",
+      "run": "python app.py"
     },
     {
       "name": "winbat",
@@ -35,17 +39,20 @@
     {
       "name": "ClaudeBot",
       "url": "https://github.com/Jeffrey0117/ClaudeBot.git",
-      "postInstall": "npm install"
+      "postInstall": "npm install",
+      "run": "npm run dev"
     },
     {
       "name": "CloudPipe",
       "url": "https://github.com/Jeffrey0117/CloudPipe.git",
-      "postInstall": "npm install"
+      "postInstall": "npm install",
+      "run": "npm start"
     },
     {
       "name": "Screenshot-OCR",
       "url": "https://github.com/Jeffrey0117/Screenshot-OCR.git",
-      "postInstall": "npm install"
+      "postInstall": "npm install",
+      "run": "npm run dev"
     }
   ]
 }
