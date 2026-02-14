@@ -6,7 +6,8 @@
     { "name": "python", "cmd": "python", "winget": "Python.Python.3.12" },
     { "name": "gh",     "cmd": "gh",     "winget": "GitHub.cli" },
     { "name": "docker", "cmd": "docker", "winget": "Docker.DockerDesktop" },
-    { "name": "ffmpeg", "cmd": "ffmpeg", "winget": "Gyan.FFmpeg" }
+    { "name": "ffmpeg", "cmd": "ffmpeg", "winget": "Gyan.FFmpeg" },
+    { "name": "pnpm",   "cmd": "pnpm",   "winget": "pnpm.pnpm" }
   ],
   "repos": [
     {
@@ -19,14 +20,14 @@
     {
       "name": "RePic",
       "url": "https://github.com/Jeffrey0117/RePic.git",
-      "postInstall": "npm install",
+      "postInstall": "pnpm install",
       "run": "npm run electron:dev",
       "logo": "repic-logo.png"
     },
     {
       "name": "ReVid",
       "url": "https://github.com/Jeffrey0117/ReVid.git",
-      "postInstall": "npm install",
+      "postInstall": "pnpm install",
       "run": "npm run electron:dev",
       "logo": "revid.png"
     },
@@ -43,20 +44,20 @@
     {
       "name": "ClaudeBot",
       "url": "https://github.com/Jeffrey0117/ClaudeBot.git",
-      "postInstall": "npm install",
+      "postInstall": "pnpm install",
       "run": "npm run dev"
     },
     {
       "name": "CloudPipe",
       "url": "https://github.com/Jeffrey0117/CloudPipe.git",
-      "postInstall": "npm install",
+      "postInstall": "pnpm install",
       "run": "npm start",
       "logo": "LOGO.png"
     },
     {
       "name": "Screenshot-OCR",
       "url": "https://github.com/Jeffrey0117/Screenshot-OCR.git",
-      "postInstall": "npm install",
+      "postInstall": "pnpm install",
       "run": "npm run dev",
       "logo": "mainpic.png"
     }
