@@ -21,14 +21,14 @@
       "name": "RePic",
       "url": "https://github.com/Jeffrey0117/RePic.git",
       "postInstall": "pnpm install",
-      "run": "npm run electron:dev",
+      "run": "pnpm run electron:dev",
       "logo": "repic-logo.png"
     },
     {
       "name": "ReVid",
       "url": "https://github.com/Jeffrey0117/ReVid.git",
       "postInstall": "pnpm install",
-      "run": "npm run electron:dev",
+      "run": "pnpm run electron:dev",
       "logo": "revid.png"
     },
     {
@@ -45,20 +45,20 @@
       "name": "ClaudeBot",
       "url": "https://github.com/Jeffrey0117/ClaudeBot.git",
       "postInstall": "pnpm install",
-      "run": "npm run dev"
+      "run": "pnpm run dev"
     },
     {
       "name": "CloudPipe",
       "url": "https://github.com/Jeffrey0117/CloudPipe.git",
       "postInstall": "pnpm install",
-      "run": "npm start",
+      "run": "pnpm start",
       "logo": "LOGO.png"
     },
     {
       "name": "Screenshot-OCR",
       "url": "https://github.com/Jeffrey0117/Screenshot-OCR.git",
       "postInstall": "pnpm install",
-      "run": "npm run dev",
+      "run": "pnpm run dev",
       "logo": "mainpic.png"
     }
   ]
