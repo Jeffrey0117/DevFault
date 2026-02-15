@@ -70,6 +70,10 @@
     {
       "name": "saveclaudenode",
       "url": "https://github.com/Jeffrey0117/saveclaudenode.git"
+    },
+    {
+      "name": "myclaudeset",
+      "url": "https://github.com/Jeffrey0117/myclaudeset.git"
     }
   ]
 }
