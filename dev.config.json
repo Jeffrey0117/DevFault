@@ -60,6 +60,16 @@
       "postInstall": "pnpm install",
       "run": "pnpm run dev",
       "logo": "mainpic.png"
+    },
+    {
+      "name": "ShotBoard",
+      "url": "https://github.com/Jeffrey0117/ShotBoard.git",
+      "postInstall": "npm install",
+      "run": "npm run dev"
+    },
+    {
+      "name": "saveclaudenode",
+      "url": "https://github.com/Jeffrey0117/saveclaudenode.git"
     }
   ]
 }
