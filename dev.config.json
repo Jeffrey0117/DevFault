@@ -74,6 +74,12 @@
     {
       "name": "myclaudeset",
       "url": "https://github.com/Jeffrey0117/myclaudeset.git"
+    },
+    {
+      "name": "MdMan",
+      "url": "https://github.com/Jeffrey0117/MdMan.git",
+      "postInstall": "pnpm install",
+      "run": "pnpm run dev"
     }
   ]
 }
