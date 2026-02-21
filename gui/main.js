@@ -152,6 +152,7 @@ ipcMain.handle("sync-all", () => {
   return new Promise((resolve) => {
     const devupPath = path.join(__dirname, "..", "devup.js")
     const child = spawn("node", [devupPath], {
+      cwd: path.join(__dirname, ".."),
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
     })
