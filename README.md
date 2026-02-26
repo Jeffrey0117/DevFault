@@ -186,17 +186,20 @@ Projects:
   Screenshot-OCR         npm run dev
 ```
 
-## ZeroSetup + DevUp
+## Ecosystem
 
-These are sister projects:
+DevUp is part of a developer toolkit that covers your entire workflow:
 
-| | ZeroSetup | DevUp |
-|---|-----------|-------|
-| Scope | Single project | Entire dev environment |
-| Does | Generate setup.bat for any project | Clone all repos + install all tools |
-| For | End users deploying your app | Developers setting up their workspace |
+| Tool | What It Does | Repo |
+|------|-------------|------|
+| **DevUp** | New machine? One command rebuilds your entire workspace | *you are here* |
+| [**ZeroSetup**](https://github.com/Jeffrey0117/ZeroSetup) | Any GitHub project, double-click to run. Zero setup steps | `npx zerosetup` |
+| [**ClaudeBot**](https://github.com/Jeffrey0117/ClaudeBot) | Write code from your phone via AI. Voice-to-code, live streaming | Telegram bot |
+| [**CloudPipe**](https://github.com/Jeffrey0117/CloudPipe) | Self-hosted Vercel. Auto-deploys, Telegram control, 31+ MCP tools | `npm i -g @jeffrey0117/cloudpipe` |
 
-DevUp uses ZeroSetup as its detection engine. When DevUp clones a repo, ZeroSetup scans it and tells DevUp exactly what to install and how to run it.
+**DevUp uses ZeroSetup** as its detection engine — when DevUp clones a repo, ZeroSetup scans it and tells DevUp exactly what to install and how to run it.
+
+**The full loop:** DevUp sets up your machine → ClaudeBot writes code from your phone → CloudPipe auto-deploys → you manage everything from Telegram.
 
 ## GUI
 
