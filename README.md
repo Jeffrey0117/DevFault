@@ -76,6 +76,39 @@ It also auto-detects:
 - Entry point and start command
 - Global tools needed (pm2, etc.)
 
+## New Machine? 3 Steps Done.
+
+拿到新電腦，只要有 Node.js：
+
+```bash
+npm i -g devup-cli        # 1. 裝 DevUp
+devup init                # 2. 生成設定檔 ~/.devup/dev.config.json
+# 編輯設定檔，貼上你的 repo URLs
+devup                     # 3. 一鍵搞定
+```
+
+設定檔就是一個 JSON，記錄你所有的工具和專案：
+
+```json
+{
+  "baseDir": "~/workspace",
+  "tools": [
+    { "name": "git",    "cmd": "git",    "winget": "Git.Git" },
+    { "name": "node",   "cmd": "node",   "winget": "OpenJS.NodeJS.LTS" },
+    { "name": "python", "cmd": "python", "winget": "Python.Python.3.12" }
+  ],
+  "repos": [
+    { "url": "https://github.com/you/project-a.git" },
+    { "url": "https://github.com/you/project-b.git" },
+    { "url": "https://github.com/you/project-c.git" }
+  ]
+}
+```
+
+就這樣。只要 URL。DevUp 自動偵測其他一切。
+
+把這個 JSON 備份到 GitHub Gist 或雲端，下次換電腦直接複製貼上，`devup` 一跑 — Git、Node、Python、Docker 全部裝好，12 個 repo 全部 clone 完，每個專案的依賴全部裝好。比 Docker 還猛，因為不用容器，直接原生環境。
+
 ## Install
 
 ```bash
@@ -93,25 +126,7 @@ devup run <name>   # Launch a project
 
 ## Config
 
-`dev.config.json` — place in current directory or `~/.devup/dev.config.json`:
-
-```json
-{
-  "baseDir": "~/workspace",
-  "tools": [
-    { "name": "git",    "cmd": "git",    "winget": "Git.Git" },
-    { "name": "node",   "cmd": "node",   "winget": "OpenJS.NodeJS.LTS" },
-    { "name": "python", "cmd": "python", "winget": "Python.Python.3.12" }
-  ],
-  "repos": [
-    { "url": "https://github.com/you/project-a.git" },
-    { "url": "https://github.com/you/project-b.git" },
-    { "url": "https://github.com/you/project-c.git", "logo": "logo.png" }
-  ]
-}
-```
-
-That's it. Just URLs. DevUp figures out the rest.
+`dev.config.json` 放在當前目錄或 `~/.devup/dev.config.json` 都行。
 
 ### Tool fields
 
