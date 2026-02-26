@@ -1,12 +1,32 @@
 {
   "name": "devup",
-  "version": "1.0.0",
-  "description": "Dev Bootstrap System - rebuild your dev universe with one command",
+  "version": "2.0.0",
+  "description": "Rebuild your entire dev environment with one command. Auto-detects everything.",
   "type": "module",
   "bin": {
     "devup": "./devup.js"
   },
+  "files": [
+    "devup.js"
+  ],
   "scripts": {
     "start": "node devup.js"
+  },
+  "keywords": [
+    "dev-setup",
+    "bootstrap",
+    "environment",
+    "windows",
+    "winget",
+    "auto-detect"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jeffrey0117/devup"
+  },
+  "author": "Jeffrey0117",
+  "license": "MIT",
+  "dependencies": {
+    "zerosetup": "^2.1.0"
   }
 }

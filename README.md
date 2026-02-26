@@ -1,43 +1,99 @@
-# devup
+# DevUp
 
 Rebuild your entire dev environment with one command.
 
 ```
-devup
+npx devup
 ```
 
 New machine? Run once, go grab a coffee, come back — everything's ready.
 
-## How it works
+## The Problem
 
-**Phase 1: System Tools** — Checks if tools exist (`where`), installs missing ones via `winget`. Already installed = skip instantly.
+You got a new laptop. Now you need to:
 
-**Phase 2: Repos** — Clones repos if missing, pulls if already cloned, runs `postInstall` commands.
+1. Install Git, Node, Python, Docker, FFmpeg...
+2. Clone 12 repos scattered across GitHub
+3. Figure out which uses npm, which uses pnpm, which uses pip
+4. Run the right install command for each one
+5. Remember which port each project runs on
 
-Idempotent. Run it 100 times, same result. No wasted time.
+That's half a day gone. And you'll forget something.
+
+## The Fix
+
+```bash
+devup
+```
+
+```
+[Phase 1] System tools...
+
+  git OK
+  node OK
+  Installing docker...
+  docker installed!
+
+[Phase 2] Repos...
+
+  CloudPipe: cloning...
+  CloudPipe: installing deps (pm2)...
+  CloudPipe: done!
+
+  RePic: pulling...
+  RePic: installing deps (pnpm)...
+  RePic: done!
+
+  Ytify: cloning...
+  Ytify: installing deps (pip)...
+  Ytify: done!
+
+  All tools & repos ready!
+```
+
+One command. Every tool installed. Every repo cloned. Every dependency resolved.
+
+## Smart Detection (powered by ZeroSetup)
+
+DevUp uses [ZeroSetup](https://github.com/Jeffrey0117/ZeroSetup) to auto-detect each project:
+
+| Lock File | Detected PM | Install Command |
+|-----------|-------------|-----------------|
+| `pnpm-lock.yaml` | pnpm | `pnpm install` |
+| `yarn.lock` | yarn | `yarn install` |
+| `bun.lockb` | bun | `bun install` |
+| `package-lock.json` | npm | `npm install` |
+| `uv.lock` | uv | `uv sync` |
+| `Pipfile` | pipenv | `pipenv install` |
+| `poetry.lock` | poetry | `poetry install` |
+| `requirements.txt` | pip | `pip install -r requirements.txt` |
+
+No manual `postInstall` config needed. DevUp reads your lock files and does the right thing.
+
+It also auto-detects:
+- Runtime (Node / Python / both)
+- Framework (Express, Next.js, FastAPI, Flask...)
+- Entry point and start command
+- Global tools needed (pm2, etc.)
 
 ## Install
 
 ```bash
-npm link
+npm install -g devup
 ```
-
-Now `devup` is available globally.
 
 ## Usage
 
 ```bash
-devup              # Full setup (install tools + clone/pull repos)
+devup              # Full setup (install tools + clone/pull all repos)
 devup init         # Generate sample config at ~/.devup/
-devup ls           # List all launchable projects
-devup run <name>   # Launch a project (e.g. devup run RePic)
+devup ls           # List all projects with detected run commands
+devup run <name>   # Launch a project
 ```
 
 ## Config
 
-`dev.config.json` can be placed in:
-1. Current directory (`./dev.config.json`)
-2. Home directory (`~/.devup/dev.config.json`) — recommended
+`dev.config.json` — place in current directory or `~/.devup/dev.config.json`:
 
 ```json
 {
@@ -45,20 +101,17 @@ devup run <name>   # Launch a project (e.g. devup run RePic)
   "tools": [
     { "name": "git",    "cmd": "git",    "winget": "Git.Git" },
     { "name": "node",   "cmd": "node",   "winget": "OpenJS.NodeJS.LTS" },
-    { "name": "python", "cmd": "python", "winget": "Python.Python.3.12" },
-    { "name": "docker", "cmd": "docker", "winget": "Docker.DockerDesktop" }
+    { "name": "python", "cmd": "python", "winget": "Python.Python.3.12" }
   ],
   "repos": [
-    {
-      "name": "my-project",
-      "url": "https://github.com/you/my-project.git",
-      "branch": "main",
-      "postInstall": "npm install",
-      "run": "npm run dev"
-    }
+    { "url": "https://github.com/you/project-a.git" },
+    { "url": "https://github.com/you/project-b.git" },
+    { "url": "https://github.com/you/project-c.git", "logo": "logo.png" }
   ]
 }
 ```
+
+That's it. Just URLs. DevUp figures out the rest.
 
 ### Tool fields
 
@@ -66,64 +119,57 @@ devup run <name>   # Launch a project (e.g. devup run RePic)
 |-------|-------------|
 | `name` | Display name |
 | `cmd` | Command to check existence (`where <cmd>`) |
-| `winget` | winget package ID for installation |
+| `winget` | winget package ID for auto-install |
 
 ### Repo fields
 
 | Field | Description |
 |-------|-------------|
-| `name` | Folder name under `baseDir` |
-| `url` | Git clone URL |
+| `url` | Git clone URL (required) |
+| `name` | Folder name override (auto-extracted from URL) |
 | `branch` | Branch to checkout (optional) |
-| `postInstall` | Command to run after clone/pull (optional) |
-| `run` | Command for `devup run` to launch the project (optional). Projects without `run` won't appear in `devup ls` |
+| `logo` | Logo path for GUI (optional) |
+| `postInstall` | Manual override for install command (optional) |
+| `run` | Manual override for start command (optional) |
+
+Manual overrides exist but you almost never need them — ZeroSetup handles detection automatically.
+
+## Example: `devup ls`
+
+```
+Projects:
+
+  CloudPipe              pm2 start ecosystem.config.js
+  RePic                  npm run dev [pnpm]
+  ReVid                  npm run dev
+  Ytify                  python main.py
+  PyClick                python tray_clicker.py
+  Screenshot-OCR         npm run dev
+```
+
+## ZeroSetup + DevUp
+
+These are sister projects:
+
+| | ZeroSetup | DevUp |
+|---|-----------|-------|
+| Scope | Single project | Entire dev environment |
+| Does | Generate setup.bat for any project | Clone all repos + install all tools |
+| For | End users deploying your app | Developers setting up their workspace |
+
+DevUp uses ZeroSetup as its detection engine. When DevUp clones a repo, ZeroSetup scans it and tells DevUp exactly what to install and how to run it.
 
 ## GUI
 
-devup also comes with an Electron desktop app for visual project launching.
+DevUp also includes an Electron desktop app for visual project launching.
 
 ```bash
 cd gui && npm install && npm start
 ```
 
-Features:
 - Tools status at a glance
 - One-click Run / Stop for each project
 - Sync All button to pull all repos
-
-## Example: `devup ls`
-
-```
-可啟動的專案：
-
-  PyClick              → python tray_clicker.py
-  RePic                → npm run dev
-  ReVid                → npm run dev
-  ClaudeBot            → npm run dev
-  CloudPipe            → npm start
-  Screenshot-OCR       → npm run dev
-```
-
-## Example: `devup`
-
-```
-🔧 Phase 1: Checking system tools...
-
-✅ git already installed, skipping
-✅ node already installed, skipping
-📦 Installing docker...
-✅ docker installed!
-
-🔧 All tools ready!
-
-📂 Phase 2: Setting up repos...
-
-📥 Cloning my-project...
-⚙️  Running postInstall: npm install
-✅ my-project done!
-
-🚀 All tools & repos are ready!
-```
 
 ## License
 

@@ -1,45 +1,48 @@
 #!/usr/bin/env node
 
 import { execSync } from "child_process"
+import { createRequire } from "module"
 import fs from "fs"
 import path from "path"
 import os from "os"
 
+const require = createRequire(import.meta.url)
+const { detect } = require("zerosetup/lib/detect")
+
 const cmd = process.argv[2]
 const cmdArg = process.argv[3]
 
-// init：產生範例 config 到 ~/.devup/
+// ==================== init ====================
+
 if (cmd === "init" || cmd === "--init") {
   const initDir = path.join(os.homedir(), ".devup")
   const initPath = path.join(initDir, "dev.config.json")
 
   if (fs.existsSync(initPath)) {
-    console.log(`⚠️  設定檔已存在：${initPath}`)
+    console.log(`Already exists: ${initPath}`)
     process.exit(0)
   }
 
   const template = {
     baseDir: "~/workspace",
+    tools: [
+      { name: "git", cmd: "git", winget: "Git.Git" },
+      { name: "node", cmd: "node", winget: "OpenJS.NodeJS.LTS" },
+    ],
     repos: [
-      {
-        name: "my-project",
-        url: "git@github.com:yourname/my-project.git",
-        branch: "main",
-        postInstall: "npm install",
-      },
+      { url: "https://github.com/you/your-project.git" },
     ],
   }
 
   fs.mkdirSync(initDir, { recursive: true })
   fs.writeFileSync(initPath, JSON.stringify(template, null, 2) + "\n")
-  console.log(`✅ 範例設定已建立：${initPath}`)
-  console.log("👉 編輯這個檔案，加入你的 repos，然後執行 devup")
+  console.log(`Created: ${initPath}`)
+  console.log("Edit the file, add your repos, then run: devup")
   process.exit(0)
 }
 
-// Config 搜尋順序：
-// 1. 當前目錄的 dev.config.json
-// 2. ~/.devup/dev.config.json（推薦放這）
+// ==================== Load config ====================
+
 const candidates = [
   path.join(process.cwd(), "dev.config.json"),
   path.join(os.homedir(), ".devup", "dev.config.json"),
@@ -48,152 +51,239 @@ const candidates = [
 const configPath = candidates.find((p) => fs.existsSync(p))
 
 if (!configPath) {
-  console.error("❌ 找不到 dev.config.json")
-  console.error("")
-  console.error("請建立設定檔在以下任一位置：")
-  console.error(`  1. ./dev.config.json`)
-  console.error(`  2. ~/.devup/dev.config.json`)
-  console.error("")
-  console.error("或執行 devup --init 產生範例設定")
+  console.error("No dev.config.json found.\n")
+  console.error("Create one at:")
+  console.error("  1. ./dev.config.json")
+  console.error("  2. ~/.devup/dev.config.json\n")
+  console.error("Or run: devup init")
   process.exit(1)
 }
 
 const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
 const baseDir = path.resolve(config.baseDir.replace("~", os.homedir()))
 
-// ls：列出所有可啟動的專案
-if (cmd === "ls" || cmd === "--list") {
-  const runnable = config.repos.filter((r) => r.run)
-  if (runnable.length === 0) {
-    console.log("沒有設定 run 指令的專案")
-    process.exit(0)
+// ==================== Helpers ====================
+
+function repoName(repo) {
+  if (repo.name) return repo.name
+  // Extract from URL: https://github.com/user/my-project.git → my-project
+  const match = repo.url.match(/\/([^/]+?)(\.git)?$/)
+  return match ? match[1] : repo.url
+}
+
+function smartDetect(repoPath) {
+  try {
+    return detect(repoPath)
+  } catch {
+    return null
   }
-  console.log("\n可啟動的專案：\n")
-  for (const repo of runnable) {
-    console.log(`  ${repo.name.padEnd(20)} → ${repo.run}`)
+}
+
+function getInstallCmd(detected, repo) {
+  // Manual override wins
+  if (repo.postInstall) return repo.postInstall
+
+  if (!detected) return null
+
+  const pm = detected.packageManager
+  if (pm) return pm.install
+
+  // Fallback
+  if (detected.deps.npm) return "npm install"
+  if (detected.deps.pip) return "pip install -r requirements.txt"
+
+  return null
+}
+
+function getRunCmd(detected, repo) {
+  // Manual override wins
+  if (repo.run) return repo.run
+
+  if (!detected) return null
+
+  return detected.startCmd || null
+}
+
+function isToolInstalled(tool) {
+  try {
+    execSync(`where ${tool.cmd}`, { stdio: "ignore" })
+    return true
+  } catch {
+    try {
+      const out = execSync(`winget list --id ${tool.winget} --accept-source-agreements`, {
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "ignore"],
+      })
+      return out.includes(tool.winget)
+    } catch {
+      return false
+    }
+  }
+}
+
+// ==================== ls ====================
+
+if (cmd === "ls" || cmd === "--list") {
+  console.log("\nProjects:\n")
+  for (const repo of config.repos) {
+    const name = repoName(repo)
+    const target = path.join(baseDir, name)
+    const cloned = fs.existsSync(path.join(target, ".git"))
+
+    if (!cloned) {
+      console.log(`  ${name.padEnd(22)} [not cloned]`)
+      continue
+    }
+
+    const detected = smartDetect(target)
+    const runCmd = getRunCmd(detected, repo)
+    const pm = detected?.packageManager?.name
+
+    if (runCmd) {
+      const pmTag = pm && pm !== "npm" ? ` [${pm}]` : ""
+      console.log(`  ${name.padEnd(22)} ${runCmd}${pmTag}`)
+    } else {
+      console.log(`  ${name.padEnd(22)} [no start command]`)
+    }
   }
   console.log("")
   process.exit(0)
 }
 
-// run <name>：啟動專案
+// ==================== run <name> ====================
+
 if (cmd === "run" || cmd === "--run") {
-  const name = cmdArg
-  if (!name) {
-    console.error("❌ 請指定專案名稱：devup run <name>")
+  if (!cmdArg) {
+    console.error("Usage: devup run <name>")
     process.exit(1)
   }
 
-  const repo = config.repos.find((r) => r.name.toLowerCase() === name.toLowerCase())
+  const repo = config.repos.find((r) => repoName(r).toLowerCase() === cmdArg.toLowerCase())
   if (!repo) {
-    console.error(`❌ 找不到專案：${name}`)
-    process.exit(1)
-  }
-  if (!repo.run) {
-    console.error(`❌ ${repo.name} 沒有設定 run 指令`)
+    console.error(`Not found: ${cmdArg}`)
     process.exit(1)
   }
 
-  const target = path.join(baseDir, repo.name)
+  const name = repoName(repo)
+  const target = path.join(baseDir, name)
+
   if (!fs.existsSync(target)) {
-    console.error(`❌ 專案目錄不存在：${target}`)
-    console.error("   請先執行 devup 安裝")
+    console.error(`${name} not cloned yet. Run: devup`)
     process.exit(1)
   }
 
-  console.log(`🚀 Starting ${repo.name}... (${repo.run})\n`)
+  const detected = smartDetect(target)
+  const runCmd = getRunCmd(detected, repo)
+
+  if (!runCmd) {
+    console.error(`${name}: no start command detected`)
+    process.exit(1)
+  }
+
+  console.log(`Starting ${name}... (${runCmd})\n`)
   try {
-    execSync(repo.run, { cwd: target, stdio: "inherit" })
+    execSync(runCmd, { cwd: target, stdio: "inherit" })
   } catch {}
   process.exit(0)
 }
 
-// === Default: full setup ===
-console.log(`📄 Using config: ${configPath}\n`)
+// ==================== Default: full setup ====================
+
+console.log(`\n  DevUp`)
+console.log(`  =====`)
+console.log(`  Config: ${configPath}\n`)
 
 if (!fs.existsSync(baseDir)) {
   fs.mkdirSync(baseDir, { recursive: true })
 }
 
-// === Phase 1: Install tools ===
+// === Phase 1: System tools ===
 const toolsFailed = []
 
 if (config.tools && config.tools.length > 0) {
-  console.log("🔧 Phase 1: Checking system tools...\n")
+  console.log("[Phase 1] System tools...\n")
 
   for (const tool of config.tools) {
-    // 先用 where 檢查 PATH，找不到再用 winget list 確認是否已裝
-    let installed = false
-    try {
-      execSync(`where ${tool.cmd}`, { stdio: "ignore" })
-      installed = true
-    } catch {
-      try {
-        const out = execSync(`winget list --id ${tool.winget} --accept-source-agreements`, { encoding: "utf-8" })
-        if (out.includes(tool.winget)) installed = true
-      } catch {}
-    }
-
-    if (installed) {
-      console.log(`✅ ${tool.name} already installed, skipping`)
+    if (isToolInstalled(tool)) {
+      console.log(`  ${tool.name} OK`)
     } else {
-      console.log(`📦 Installing ${tool.name}...`)
+      console.log(`  Installing ${tool.name}...`)
       try {
-        execSync(`winget install -e --id ${tool.winget} --accept-source-agreements --accept-package-agreements`, { stdio: "inherit" })
-        console.log(`✅ ${tool.name} installed!\n`)
+        execSync(`winget install -e --id ${tool.winget} --accept-source-agreements --accept-package-agreements`, {
+          stdio: "inherit",
+        })
+        console.log(`  ${tool.name} installed!\n`)
       } catch (err) {
-        console.error(`❌ ${tool.name} install failed: ${err.message}\n`)
+        console.error(`  ${tool.name} failed: ${err.message}\n`)
         toolsFailed.push(tool.name)
       }
     }
   }
 
-  if (toolsFailed.length > 0) {
-    console.log(`⚠️  Some tools failed: ${toolsFailed.join(", ")}`)
-    console.log("   Continuing with repos anyway...\n")
-  } else {
-    console.log("🔧 All tools ready!\n")
-  }
+  console.log("")
 }
 
 // === Phase 2: Clone/pull repos ===
-console.log("📂 Phase 2: Setting up repos...")
-console.log(`📂 Base directory: ${baseDir}\n`)
+console.log("[Phase 2] Repos...\n")
+console.log(`  Base: ${baseDir}\n`)
 
 const failed = []
 
 for (const repo of config.repos) {
-  const target = path.join(baseDir, repo.name)
+  const name = repoName(repo)
+  const target = path.join(baseDir, name)
 
   try {
+    // Clone or pull
     if (fs.existsSync(path.join(target, ".git"))) {
-      console.log(`🔄 Pulling ${repo.name}...`)
+      console.log(`  ${name}: pulling...`)
       execSync(`git -C "${target}" pull`, { stdio: "inherit" })
     } else {
-      console.log(`📥 Cloning ${repo.name}...`)
+      console.log(`  ${name}: cloning...`)
       execSync(`git clone ${repo.url} "${target}"`, { stdio: "inherit" })
     }
 
     if (repo.branch) {
-      console.log(`🌿 Checking out branch: ${repo.branch}`)
       execSync(`git -C "${target}" checkout ${repo.branch}`, { stdio: "inherit" })
     }
 
-    if (repo.postInstall) {
-      console.log(`⚙️  Running postInstall: ${repo.postInstall}`)
-      execSync(repo.postInstall, { cwd: target, stdio: "inherit" })
+    // === Phase 3: Smart detect + install ===
+    const detected = smartDetect(target)
+    const installCmd = getInstallCmd(detected, repo)
+    const pm = detected?.packageManager?.name
+
+    if (installCmd) {
+      const pmLabel = pm && pm !== "npm" ? ` (${pm})` : ""
+      console.log(`  ${name}: installing deps${pmLabel}...`)
+      execSync(installCmd, { cwd: target, stdio: "inherit" })
     }
 
-    console.log(`✅ ${repo.name} done!\n`)
+    // Install npm globals if detected
+    if (detected?.deps?.npmGlobal) {
+      for (const g of detected.deps.npmGlobal) {
+        try {
+          execSync(`where ${g}`, { stdio: "ignore" })
+        } catch {
+          console.log(`  ${name}: installing ${g} globally...`)
+          execSync(`npm install -g ${g}`, { stdio: "inherit" })
+        }
+      }
+    }
+
+    console.log(`  ${name}: done!\n`)
   } catch (err) {
-    console.error(`❌ ${repo.name} failed: ${err.message}\n`)
-    failed.push(repo.name)
+    console.error(`  ${name}: failed - ${err.message}\n`)
+    failed.push(name)
   }
 }
 
+// === Summary ===
+console.log("")
 if (toolsFailed.length > 0 || failed.length > 0) {
-  if (toolsFailed.length > 0) console.log(`⚠️  Failed tools: ${toolsFailed.join(", ")}`)
-  if (failed.length > 0) console.log(`⚠️  Failed repos: ${failed.join(", ")}`)
+  if (toolsFailed.length > 0) console.log(`  Failed tools: ${toolsFailed.join(", ")}`)
+  if (failed.length > 0) console.log(`  Failed repos: ${failed.join(", ")}`)
 } else {
-  console.log("🚀 All tools & repos are ready!")
+  console.log("  All tools & repos ready!")
 }
+console.log(`\n  Run 'devup ls' to see launchable projects.`)
+console.log(`  Run 'devup run <name>' to start one.\n`)
