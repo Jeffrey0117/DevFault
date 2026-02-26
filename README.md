@@ -107,7 +107,7 @@ devup                     # 3. 一鍵搞定
 
 就這樣。只要 URL。DevUp 自動偵測其他一切。
 
-把這個 JSON 備份到 GitHub Gist 或雲端，下次換電腦直接複製貼上，`devup` 一跑 — Git、Node、Python、Docker 全部裝好，12 個 repo 全部 clone 完，每個專案的依賴全部裝好。比 Docker 還猛，因為不用容器，直接原生環境。
+這個 JSON 跟著你的 devup repo 走（已經在 GitHub 上）。換電腦時 clone devup，`devup` 一跑 — 所有工具裝好，所有 repo clone 完，所有依賴裝好。比 Docker 還猛，不用容器，直接原生環境。
 
 ## Install
 
@@ -120,8 +120,32 @@ npm install -g devup-cli
 ```bash
 devup              # Full setup (install tools + clone/pull all repos)
 devup init         # Generate sample config at ~/.devup/
+devup add <url>    # Add a repo to config
+devup scan         # Auto-detect repos in workspace, add missing ones
+devup sync         # Sync config across machines (git pull + push)
 devup ls           # List all projects with detected run commands
 devup run <name>   # Launch a project
+```
+
+### Cross-Machine Sync
+
+```bash
+# Computer A: 加了新專案
+devup add https://github.com/someone/new-project.git
+devup sync         # push config 到 GitHub
+
+# Computer B: 同步
+devup sync         # pull 最新 config
+devup              # 自動 clone 新專案 + 裝依賴
+```
+
+### Auto-Scan
+
+手動 clone 了一堆東西到 workspace？
+
+```bash
+devup scan         # 掃描 workspace，自動把新 repo 加進 config
+devup sync         # 同步到 GitHub
 ```
 
 ## Config

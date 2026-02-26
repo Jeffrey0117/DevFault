@@ -66,9 +66,25 @@ const baseDir = path.resolve(config.baseDir.replace("~", os.homedir()))
 
 function repoName(repo) {
   if (repo.name) return repo.name
-  // Extract from URL: https://github.com/user/my-project.git → my-project
   const match = repo.url.match(/\/([^/]+?)(\.git)?$/)
   return match ? match[1] : repo.url
+}
+
+function normalizeUrl(url) {
+  return url.replace(/\.git$/, "").toLowerCase()
+}
+
+function saveConfig(cfgPath, cfg) {
+  fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2) + "\n")
+}
+
+function findGitRoot(startPath) {
+  let dir = startPath
+  while (dir !== path.dirname(dir)) {
+    if (fs.existsSync(path.join(dir, ".git"))) return dir
+    dir = path.dirname(dir)
+  }
+  return null
 }
 
 function smartDetect(repoPath) {
@@ -119,6 +135,126 @@ function isToolInstalled(tool) {
       return false
     }
   }
+}
+
+// ==================== add <url> ====================
+
+if (cmd === "add") {
+  if (!cmdArg) {
+    console.error("Usage: devup add <git-url>")
+    process.exit(1)
+  }
+
+  const exists = config.repos.some((r) => normalizeUrl(r.url) === normalizeUrl(cmdArg))
+  if (exists) {
+    console.log(`Already in config: ${cmdArg}`)
+    process.exit(0)
+  }
+
+  const updated = {
+    ...config,
+    repos: [...config.repos, { url: cmdArg }],
+  }
+  saveConfig(configPath, updated)
+
+  const name = cmdArg.match(/\/([^/]+?)(\.git)?$/)?.[1] || cmdArg
+  console.log(`Added: ${name}`)
+  console.log(`Config: ${configPath} (${updated.repos.length} repos)`)
+  process.exit(0)
+}
+
+// ==================== scan ====================
+
+if (cmd === "scan") {
+  if (!fs.existsSync(baseDir)) {
+    console.error(`Base directory not found: ${baseDir}`)
+    process.exit(1)
+  }
+
+  console.log(`\nScanning ${baseDir}...\n`)
+
+  const existingUrls = new Set(config.repos.map((r) => normalizeUrl(r.url)))
+  const added = []
+
+  const entries = fs.readdirSync(baseDir, { withFileTypes: true })
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    const dir = path.join(baseDir, entry.name)
+    if (!fs.existsSync(path.join(dir, ".git"))) continue
+
+    try {
+      const url = execSync(`git -C "${dir}" remote get-url origin`, {
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim()
+
+      if (url && !existingUrls.has(normalizeUrl(url))) {
+        added.push({ url })
+        existingUrls.add(normalizeUrl(url))
+      }
+    } catch {}
+  }
+
+  if (added.length === 0) {
+    console.log(`Found ${entries.length} dirs, all already in config.`)
+    console.log(`Config: ${configPath} (${config.repos.length} repos)`)
+    process.exit(0)
+  }
+
+  const updated = {
+    ...config,
+    repos: [...config.repos, ...added],
+  }
+  saveConfig(configPath, updated)
+
+  for (const repo of added) {
+    const name = repo.url.match(/\/([^/]+?)(\.git)?$/)?.[1] || repo.url
+    console.log(`  Added: ${name}`)
+  }
+  console.log(`\nConfig updated! (${updated.repos.length} repos)`)
+  process.exit(0)
+}
+
+// ==================== sync ====================
+
+if (cmd === "sync") {
+  const gitRoot = findGitRoot(path.dirname(configPath))
+
+  if (!gitRoot) {
+    console.error("Config is not inside a git repo. Cannot sync.")
+    console.error(`Config path: ${configPath}`)
+    process.exit(1)
+  }
+
+  console.log("\nSyncing config...\n")
+
+  // Pull first
+  try {
+    execSync(`git -C "${gitRoot}" pull`, { stdio: "inherit" })
+  } catch (err) {
+    console.error(`Pull failed: ${err.message}`)
+  }
+
+  // Re-read config after pull (may have changed)
+  const freshConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"))
+
+  // Stage config file
+  const relPath = path.relative(gitRoot, configPath)
+  execSync(`git -C "${gitRoot}" add "${relPath}"`, { stdio: "inherit" })
+
+  // Check if there's anything to commit
+  try {
+    execSync(`git -C "${gitRoot}" diff --cached --quiet`, { stdio: "ignore" })
+    console.log(`\nAlready synced! (${freshConfig.repos.length} repos)`)
+  } catch {
+    // Has staged changes → commit + push
+    const msg = `devup: sync config (${freshConfig.repos.length} repos)`
+    execSync(`git -C "${gitRoot}" commit -m "${msg}"`, { stdio: "inherit" })
+    execSync(`git -C "${gitRoot}" push`, { stdio: "inherit" })
+    console.log(`\nSynced! (${freshConfig.repos.length} repos)`)
+  }
+
+  process.exit(0)
 }
 
 // ==================== ls ====================

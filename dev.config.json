@@ -1,25 +1,79 @@
 {
   "baseDir": "~/workspace",
   "tools": [
-    { "name": "git",    "cmd": "git",    "winget": "Git.Git" },
-    { "name": "node",   "cmd": "node",   "winget": "OpenJS.NodeJS.LTS" },
-    { "name": "python", "cmd": "python", "winget": "Python.Python.3.12" },
-    { "name": "gh",     "cmd": "gh",     "winget": "GitHub.cli" },
-    { "name": "docker", "cmd": "docker", "winget": "Docker.DockerDesktop" },
-    { "name": "ffmpeg", "cmd": "ffmpeg", "winget": "Gyan.FFmpeg" }
+    {
+      "name": "git",
+      "cmd": "git",
+      "winget": "Git.Git"
+    },
+    {
+      "name": "node",
+      "cmd": "node",
+      "winget": "OpenJS.NodeJS.LTS"
+    },
+    {
+      "name": "python",
+      "cmd": "python",
+      "winget": "Python.Python.3.12"
+    },
+    {
+      "name": "gh",
+      "cmd": "gh",
+      "winget": "GitHub.cli"
+    },
+    {
+      "name": "docker",
+      "cmd": "docker",
+      "winget": "Docker.DockerDesktop"
+    },
+    {
+      "name": "ffmpeg",
+      "cmd": "ffmpeg",
+      "winget": "Gyan.FFmpeg"
+    }
   ],
   "repos": [
-    { "url": "https://github.com/Jeffrey0117/PyClick.git", "logo": "logo.png" },
-    { "url": "https://github.com/Jeffrey0117/RePic.git", "logo": "repic-logo.png" },
-    { "url": "https://github.com/Jeffrey0117/ReVid.git", "logo": "revid.png" },
-    { "url": "https://github.com/Jeffrey0117/Ytify.git", "logo": "static/logo.png" },
-    { "url": "https://github.com/Jeffrey0117/winbat.git" },
-    { "url": "https://github.com/Jeffrey0117/ClaudeBot.git" },
-    { "url": "https://github.com/Jeffrey0117/CloudPipe.git", "logo": "LOGO.png" },
-    { "url": "https://github.com/Jeffrey0117/Screenshot-OCR.git", "logo": "mainpic.png" },
-    { "url": "https://github.com/Jeffrey0117/ShotBoard.git" },
-    { "url": "https://github.com/Jeffrey0117/saveclaudenode.git" },
-    { "url": "https://github.com/Jeffrey0117/myclaudeset.git" },
-    { "url": "https://github.com/Jeffrey0117/MdMan.git" }
+    {
+      "url": "https://github.com/Jeffrey0117/PyClick.git",
+      "logo": "logo.png"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/RePic.git",
+      "logo": "repic-logo.png"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/ReVid.git",
+      "logo": "revid.png"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/Ytify.git",
+      "logo": "static/logo.png"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/winbat.git"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/ClaudeBot.git"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/CloudPipe.git",
+      "logo": "LOGO.png"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/Screenshot-OCR.git",
+      "logo": "mainpic.png"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/ShotBoard.git"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/saveclaudenode.git"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/myclaudeset.git"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/MdMan.git"
+    }
   ]
 }
