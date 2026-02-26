@@ -3,7 +3,7 @@
 Rebuild your entire dev environment with one command.
 
 ```
-npx devup
+npx devup-cli
 ```
 
 New machine? Run once, go grab a coffee, come back — everything's ready.
@@ -79,7 +79,7 @@ It also auto-detects:
 ## Install
 
 ```bash
-npm install -g devup
+npm install -g devup-cli
 ```
 
 ## Usage

@@ -1,5 +1,5 @@
 {
-  "name": "devup",
+  "name": "devup-cli",
   "version": "2.0.0",
   "description": "Rebuild your entire dev environment with one command. Auto-detects everything.",
   "type": "module",
