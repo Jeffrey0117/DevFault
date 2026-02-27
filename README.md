@@ -196,10 +196,11 @@ DevUp is part of a developer toolkit that covers your entire workflow:
 | [**ZeroSetup**](https://github.com/Jeffrey0117/ZeroSetup) | Any GitHub project, double-click to run. Zero setup steps | `npx zerosetup` |
 | [**ClaudeBot**](https://github.com/Jeffrey0117/ClaudeBot) | Write code from your phone via AI. Voice-to-code, live streaming | Telegram bot |
 | [**CloudPipe**](https://github.com/Jeffrey0117/CloudPipe) | Self-hosted Vercel. Auto-deploys, Telegram control, 31+ MCP tools | `npm i -g @jeffrey0117/cloudpipe` |
+| [**MemoryGuy**](https://github.com/Jeffrey0117/MemoryGuy) | Memory leak detection, safe optimization, port dashboard | Electron app |
 
 **DevUp uses ZeroSetup** as its detection engine — when DevUp clones a repo, ZeroSetup scans it and tells DevUp exactly what to install and how to run it.
 
-**The full loop:** DevUp sets up your machine → ClaudeBot writes code from your phone → CloudPipe auto-deploys → you manage everything from Telegram.
+**The full loop:** DevUp sets up your machine → ClaudeBot writes code from your phone → CloudPipe auto-deploys → MemoryGuy keeps it all running stable.
 
 ## GUI
 
