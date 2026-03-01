@@ -1,7 +1,7 @@
 {
-  "name": "devup-gui",
+  "name": "devfault-gui",
   "version": "1.0.0",
-  "description": "DevUp desktop launcher",
+  "description": "DevFault desktop launcher",
   "main": "main.js",
   "scripts": {
     "start": "electron ."

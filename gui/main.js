@@ -11,7 +11,7 @@ const exec = promisify(execCb)
 const candidates = [
   path.join(process.cwd(), "dev.config.json"),
   path.join(__dirname, "..", "dev.config.json"),
-  path.join(os.homedir(), ".devup", "dev.config.json"),
+  path.join(os.homedir(), ".devfault", "dev.config.json"),
 ]
 const configPath = candidates.find((p) => fs.existsSync(p))
 const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
@@ -150,8 +150,8 @@ ipcMain.handle("stop-project", (_, name) => {
 
 ipcMain.handle("sync-all", () => {
   return new Promise((resolve) => {
-    const devupPath = path.join(__dirname, "..", "devup.js")
-    const child = spawn("node", [devupPath], {
+    const devfaultPath = path.join(__dirname, "..", "devfault.js")
+    const child = spawn("node", [devfaultPath], {
       cwd: path.join(__dirname, ".."),
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,

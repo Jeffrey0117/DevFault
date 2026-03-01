@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>DevUp</title>
+  <title>DevFault</title>
   <style>
     :root {
       --bg-body: #121212;
@@ -345,7 +345,7 @@
   </div>
 
   <div class="header">
-    <h1>DevUp</h1>
+    <h1>DevFault</h1>
     <div class="header-right">
       <span class="version">v1.0.0</span>
       <button class="lang-toggle" id="theme-btn" onclick="toggleTheme()">☀</button>
@@ -399,8 +399,8 @@
       },
     }
 
-    let lang = localStorage.getItem("devup-lang") || "zh"
-    let theme = localStorage.getItem("devup-theme") || "light"
+    let lang = localStorage.getItem("devfault-lang") || "zh"
+    let theme = localStorage.getItem("devfault-theme") || "light"
     let cachedTools = null
 
     function t(key) { return i18n[lang][key] }
@@ -416,7 +416,7 @@
 
     function toggleTheme() {
       theme = theme === "light" ? "dark" : "light"
-      localStorage.setItem("devup-theme", theme)
+      localStorage.setItem("devfault-theme", theme)
       applyTheme()
     }
 
@@ -429,7 +429,7 @@
 
     function toggleLang() {
       lang = lang === "zh" ? "en" : "zh"
-      localStorage.setItem("devup-lang", lang)
+      localStorage.setItem("devfault-lang", lang)
       applyLang()
       renderRepos()
     }

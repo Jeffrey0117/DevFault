@@ -1,16 +1,16 @@
 {
-  "name": "devup-cli",
+  "name": "devfault-cli",
   "version": "2.1.0",
   "description": "Rebuild your entire dev environment with one command. Auto-detects everything.",
   "type": "module",
   "bin": {
-    "devup": "./devup.js"
+    "devfault": "./devfault.js"
   },
   "files": [
-    "devup.js"
+    "devfault.js"
   ],
   "scripts": {
-    "start": "node devup.js"
+    "start": "node devfault.js"
   },
   "keywords": [
     "dev-setup",
@@ -22,7 +22,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Jeffrey0117/devup"
+    "url": "https://github.com/Jeffrey0117/devfault"
   },
   "author": "Jeffrey0117",
   "license": "MIT",

@@ -15,7 +15,7 @@ const cmdArg = process.argv[3]
 // ==================== init ====================
 
 if (cmd === "init" || cmd === "--init") {
-  const initDir = path.join(os.homedir(), ".devup")
+  const initDir = path.join(os.homedir(), ".devfault")
   const initPath = path.join(initDir, "dev.config.json")
 
   if (fs.existsSync(initPath)) {
@@ -37,7 +37,7 @@ if (cmd === "init" || cmd === "--init") {
   fs.mkdirSync(initDir, { recursive: true })
   fs.writeFileSync(initPath, JSON.stringify(template, null, 2) + "\n")
   console.log(`Created: ${initPath}`)
-  console.log("Edit the file, add your repos, then run: devup")
+  console.log("Edit the file, add your repos, then run: devfault")
   process.exit(0)
 }
 
@@ -45,7 +45,7 @@ if (cmd === "init" || cmd === "--init") {
 
 const candidates = [
   path.join(process.cwd(), "dev.config.json"),
-  path.join(os.homedir(), ".devup", "dev.config.json"),
+  path.join(os.homedir(), ".devfault", "dev.config.json"),
 ]
 
 const configPath = candidates.find((p) => fs.existsSync(p))
@@ -54,8 +54,8 @@ if (!configPath) {
   console.error("No dev.config.json found.\n")
   console.error("Create one at:")
   console.error("  1. ./dev.config.json")
-  console.error("  2. ~/.devup/dev.config.json\n")
-  console.error("Or run: devup init")
+  console.error("  2. ~/.devfault/dev.config.json\n")
+  console.error("Or run: devfault init")
   process.exit(1)
 }
 
@@ -141,7 +141,7 @@ function isToolInstalled(tool) {
 
 if (cmd === "add") {
   if (!cmdArg) {
-    console.error("Usage: devup add <git-url>")
+    console.error("Usage: devfault add <git-url>")
     process.exit(1)
   }
 
@@ -248,7 +248,7 @@ if (cmd === "sync") {
     console.log(`\nAlready synced! (${freshConfig.repos.length} repos)`)
   } catch {
     // Has staged changes → commit + push
-    const msg = `devup: sync config (${freshConfig.repos.length} repos)`
+    const msg = `devfault: sync config (${freshConfig.repos.length} repos)`
     execSync(`git -C "${gitRoot}" commit -m "${msg}"`, { stdio: "inherit" })
     execSync(`git -C "${gitRoot}" push`, { stdio: "inherit" })
     console.log(`\nSynced! (${freshConfig.repos.length} repos)`)
@@ -290,7 +290,7 @@ if (cmd === "ls" || cmd === "--list") {
 
 if (cmd === "run" || cmd === "--run") {
   if (!cmdArg) {
-    console.error("Usage: devup run <name>")
+    console.error("Usage: devfault run <name>")
     process.exit(1)
   }
 
@@ -304,7 +304,7 @@ if (cmd === "run" || cmd === "--run") {
   const target = path.join(baseDir, name)
 
   if (!fs.existsSync(target)) {
-    console.error(`${name} not cloned yet. Run: devup`)
+    console.error(`${name} not cloned yet. Run: devfault`)
     process.exit(1)
   }
 
@@ -325,7 +325,7 @@ if (cmd === "run" || cmd === "--run") {
 
 // ==================== Default: full setup ====================
 
-console.log(`\n  DevUp`)
+console.log(`\n  DevFault`)
 console.log(`  =====`)
 console.log(`  Config: ${configPath}\n`)
 
@@ -421,5 +421,5 @@ if (toolsFailed.length > 0 || failed.length > 0) {
 } else {
   console.log("  All tools & repos ready!")
 }
-console.log(`\n  Run 'devup ls' to see launchable projects.`)
-console.log(`  Run 'devup run <name>' to start one.\n`)
+console.log(`\n  Run 'devfault ls' to see launchable projects.`)
+console.log(`  Run 'devfault run <name>' to start one.\n`)
