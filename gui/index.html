@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>devup</title>
+  <title>DevUp</title>
   <style>
     :root {
       --bg-body: #121212;
@@ -345,7 +345,7 @@
   </div>
 
   <div class="header">
-    <h1>devup</h1>
+    <h1>DevUp</h1>
     <div class="header-right">
       <span class="version">v1.0.0</span>
       <button class="lang-toggle" id="theme-btn" onclick="toggleTheme()">☀</button>
@@ -400,7 +400,7 @@
     }
 
     let lang = localStorage.getItem("devup-lang") || "zh"
-    let theme = localStorage.getItem("devup-theme") || "dark"
+    let theme = localStorage.getItem("devup-theme") || "light"
     let cachedTools = null
 
     function t(key) { return i18n[lang][key] }
