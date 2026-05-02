@@ -6,21 +6,20 @@
   <style>
     :root {
       --bg-body: #121212;
-      --bg-card: #1a1a1a;
-      --bg-card-hover: #1e1e1e;
-      --bg-elevated: #252525;
+      --bg-card: #1e1e1e;
+      --bg-card-hover: #262626;
+      --bg-elevated: #2a2a2a;
       --text-primary: #e2e4e8;
-      --text-secondary: #c9cdd3;
+      --text-secondary: #aaa;
       --text-muted: #555;
       --text-dim: #444;
       --border: #252525;
       --border-hover: #333;
       --accent: #d4a054;
       --accent-light: #e0c37e;
-      --code-color: #4a4a5a;
-      --btn-disabled-color: #333;
       --overlay-bg: rgba(0,0,0,0.75);
       --success: #48bb78;
+      --success-glow: rgba(72, 187, 120, 0.35);
       --success-bg: rgba(72, 187, 120, 0.12);
       --success-border: rgba(72, 187, 120, 0.2);
       --danger: #fc8181;
@@ -28,22 +27,21 @@
       --danger-border: rgba(229, 62, 62, 0.2);
     }
     [data-theme="light"] {
-      --bg-body: #f5f5f7;
+      --bg-body: #f2f2f7;
       --bg-card: #ffffff;
-      --bg-card-hover: #f9f9fb;
+      --bg-card-hover: #f0f0f5;
       --bg-elevated: #e8e8ec;
       --text-primary: #1a1a1a;
-      --text-secondary: #333;
+      --text-secondary: #666;
       --text-muted: #999;
       --text-dim: #bbb;
       --border: #e0e0e0;
       --border-hover: #ccc;
       --accent: #b8862d;
       --accent-light: #d4a054;
-      --code-color: #888;
-      --btn-disabled-color: #ccc;
       --overlay-bg: rgba(0,0,0,0.4);
-      --success: #2f855a;
+      --success: #34a853;
+      --success-glow: rgba(52, 168, 83, 0.3);
       --success-bg: rgba(47, 133, 90, 0.1);
       --success-border: rgba(47, 133, 90, 0.2);
       --danger: #e53e3e;
@@ -53,71 +51,56 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', -apple-system, sans-serif;
+      font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
       background: var(--bg-body);
       color: var(--text-secondary);
-      padding: 28px 24px;
+      padding: 24px 20px;
       user-select: none;
     }
 
     /* Header */
     .header {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       justify-content: space-between;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
     }
     .header h1 {
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, var(--accent-light), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text-primary);
     }
     .header-right {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
-    .header .version {
-      font-size: 11px;
-      color: var(--text-dim);
-      font-weight: 500;
-    }
-    .lang-toggle {
+    .header-btn {
       font-size: 11px;
       color: var(--text-muted);
       background: var(--bg-card);
-      border: 1px solid var(--border-hover);
-      border-radius: 5px;
-      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
       cursor: pointer;
       transition: all 0.15s;
       font-weight: 600;
     }
-    .lang-toggle:hover { color: var(--accent); border-color: var(--accent); }
+    .header-btn:hover { color: var(--accent); border-color: var(--accent); }
 
     /* Tools */
-    .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
     .tools-bar {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .tool-chip {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
-      padding: 5px 12px;
-      border-radius: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
       letter-spacing: 0.3px;
     }
     .tool-chip.ok {
@@ -131,7 +114,7 @@
       border: 1px solid var(--danger-border);
     }
     .tool-chip.checking {
-      background: var(--bg-card-hover);
+      background: var(--bg-card);
       color: var(--text-muted);
       border: 1px solid var(--border);
       position: relative;
@@ -145,142 +128,120 @@
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
       animation: shimmer 1.5s infinite;
     }
+    @keyframes shimmer { 100% { left: 100%; } }
 
-    @keyframes shimmer {
-      100% { left: 100%; }
+    /* App Grid */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px 12px;
+      padding: 4px 0;
     }
 
-    /* Repos */
-    .repo-list {
+    .app-cell {
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 6px;
+      cursor: pointer;
+      -webkit-app-region: no-drag;
     }
-    .repo-card {
+    .app-cell:active .app-icon-wrap {
+      transform: scale(0.9);
+    }
+    .app-cell.disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .app-cell.disabled:active .app-icon-wrap {
+      transform: none;
+    }
+
+    .app-icon-wrap {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      transition: transform 0.12s ease;
+    }
+
+    .app-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 14px;
+      object-fit: cover;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: border-color 0.2s, background 0.2s;
     }
-    .repo-card:hover {
-      border-color: var(--border-hover);
-      background: var(--bg-card-hover);
-    }
-    .repo-card.is-running {
-      border-color: rgba(72, 187, 120, 0.3);
-      background: rgba(72, 187, 120, 0.04);
-    }
-
-    .repo-info { display: flex; align-items: center; gap: 12px; }
-
-    .repo-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: var(--bg-elevated);
-    }
-    .repo-icon-fallback {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      flex-shrink: 0;
-      background: var(--bg-elevated);
+    .app-icon-fallback {
+      width: 60px;
+      height: 60px;
+      border-radius: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 22px;
       font-weight: 700;
       color: var(--text-muted);
     }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
+    /* Running glow ring */
+    .app-cell.running .app-icon-wrap::before {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border-radius: 17px;
+      border: 2.5px solid var(--success);
+      box-shadow: 0 0 12px var(--success-glow);
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 12px var(--success-glow); opacity: 1; }
+      50% { box-shadow: 0 0 6px var(--success-glow); opacity: 0.7; }
+    }
+
+    /* Running badge dot */
+    .app-cell.running .app-icon-wrap::after {
+      content: "";
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .status-dot.running {
-      background: #48bb78;
-      box-shadow: 0 0 8px rgba(72, 187, 120, 0.5);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    .status-dot.stopped { background: var(--border-hover); }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(72, 187, 120, 0.5); }
-      50% { opacity: 0.5; box-shadow: 0 0 4px rgba(72, 187, 120, 0.2); }
+      background: var(--success);
+      border: 2.5px solid var(--bg-body);
     }
 
-    .repo-text { display: flex; flex-direction: column; gap: 1px; }
-    .repo-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-    .repo-cmd {
+    .app-name {
       font-size: 11px;
-      color: var(--code-color);
-      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-weight: 500;
+      color: var(--text-primary);
+      text-align: center;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.2;
     }
-
-    .tag-no-run {
-      font-size: 10px;
-      color: var(--text-dim);
-      font-style: italic;
-    }
-    .tag-not-cloned {
-      font-size: 10px;
-      color: var(--danger);
-    }
-
-    /* Buttons */
-    .btn {
-      border: none;
-      border-radius: 7px;
-      padding: 7px 18px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      letter-spacing: 0.3px;
-    }
-    .btn:active { transform: scale(0.96); }
-    .btn-run {
-      background: linear-gradient(135deg, #d4a054, #c08a3e);
-      color: #fff;
-    }
-    .btn-run:hover { background: linear-gradient(135deg, #e0b06a, #d4a054); }
-    .btn-stop {
-      background: var(--danger-bg);
-      color: var(--danger);
-      border: 1px solid var(--danger-border);
-    }
-    .btn-stop:hover { background: rgba(229, 62, 62, 0.25); }
-    .btn-disabled {
-      background: transparent;
-      color: var(--btn-disabled-color);
-      cursor: default;
-    }
-    .btn-disabled:active { transform: none; }
 
     /* Footer */
     .footer {
-      margin-top: 24px;
+      margin-top: 22px;
       display: flex;
       justify-content: center;
     }
     .btn-sync {
       background: transparent;
       color: var(--accent);
-      border: 1px solid var(--border-hover);
-      border-radius: 8px;
-      padding: 9px 36px;
-      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 32px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
-      letter-spacing: 0.3px;
     }
     .btn-sync:hover {
       background: rgba(212, 160, 84, 0.1);
@@ -301,9 +262,7 @@
       justify-content: center;
       gap: 16px;
     }
-    .loading-overlay.active {
-      display: flex;
-    }
+    .loading-overlay.active { display: flex; }
     .loading-spinner {
       width: 32px;
       height: 32px;
@@ -312,9 +271,7 @@
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
-    @keyframes spin {
-      100% { transform: rotate(360deg); }
-    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
     .loading-text {
       font-size: 14px;
       font-weight: 600;
@@ -326,11 +283,11 @@
       overflow-y: auto;
       background: var(--bg-card);
       border: 1px solid var(--border-hover);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 12px;
       font-family: 'Cascadia Code', 'Fira Code', monospace;
       font-size: 11px;
-      color: var(--code-color);
+      color: var(--text-muted);
       line-height: 1.6;
       white-space: pre-wrap;
       word-break: break-all;
@@ -347,20 +304,16 @@
   <div class="header">
     <h1>DevFault</h1>
     <div class="header-right">
-      <span class="version">v1.0.0</span>
-      <button class="lang-toggle" id="theme-btn" onclick="toggleTheme()">☀</button>
-      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">EN</button>
+      <button class="header-btn" id="theme-btn" onclick="toggleTheme()"></button>
+      <button class="header-btn" id="lang-btn" onclick="toggleLang()"></button>
     </div>
   </div>
 
-  <div class="section-label" id="label-tools">TOOLS</div>
   <div class="tools-bar" id="tools-bar"></div>
-
-  <div class="section-label" id="label-projects">PROJECTS</div>
-  <div class="repo-list" id="repo-list"></div>
+  <div class="app-grid" id="app-grid"></div>
 
   <div class="footer">
-    <button class="btn-sync" id="sync-btn" onclick="syncAll()">Sync All</button>
+    <button class="btn-sync" id="sync-btn" onclick="syncAll()"></button>
   </div>
 
   <script>
@@ -368,40 +321,24 @@
 
     const i18n = {
       zh: {
-        tools: "工具",
-        projects: "專案",
-        run: "啟動",
-        stop: "停止",
-        starting: "啟動中...",
-        stopping: "停止中...",
         syncAll: "同步全部",
         syncing: "同步中...",
-        notCloned: "尚未下載",
-        noRunCmd: "無啟動指令",
-        toggle: "EN",
-        checkingTools: "正在檢查工具...",
         syncProgress: "同步中...",
+        toggle: "EN",
       },
       en: {
-        tools: "TOOLS",
-        projects: "PROJECTS",
-        run: "Run",
-        stop: "Stop",
-        starting: "Starting...",
-        stopping: "Stopping...",
         syncAll: "Sync All",
         syncing: "Syncing...",
-        notCloned: "not cloned",
-        noRunCmd: "no run command",
-        toggle: "中",
-        checkingTools: "Checking tools...",
         syncProgress: "Syncing...",
+        toggle: "中",
       },
     }
 
     let lang = localStorage.getItem("devfault-lang") || "zh"
     let theme = localStorage.getItem("devfault-theme") || "light"
     let cachedTools = null
+    let cachedRepos = []
+    let busyApps = new Set()
 
     function t(key) { return i18n[lang][key] }
 
@@ -411,7 +348,7 @@
       } else {
         document.documentElement.removeAttribute("data-theme")
       }
-      document.getElementById("theme-btn").textContent = theme === "light" ? "☾" : "☀"
+      document.getElementById("theme-btn").textContent = theme === "light" ? "Dark" : "Light"
     }
 
     function toggleTheme() {
@@ -421,8 +358,6 @@
     }
 
     function applyLang() {
-      document.getElementById("label-tools").textContent = t("tools")
-      document.getElementById("label-projects").textContent = t("projects")
       document.getElementById("lang-btn").textContent = t("toggle")
       document.getElementById("sync-btn").textContent = t("syncAll")
     }
@@ -431,7 +366,6 @@
       lang = lang === "zh" ? "en" : "zh"
       localStorage.setItem("devfault-lang", lang)
       applyLang()
-      renderRepos()
     }
 
     function renderToolsShimmer(names) {
@@ -456,112 +390,71 @@
       }
     }
 
-    function renderRepoList(repos) {
-      const list = document.getElementById("repo-list")
-      list.innerHTML = ""
+    function renderAppGrid(repos) {
+      cachedRepos = repos
+      const grid = document.getElementById("app-grid")
+      grid.innerHTML = ""
+
       for (const r of repos) {
-        const card = document.createElement("div")
-        card.className = "repo-card" + (r.running ? " is-running" : "")
+        const canRun = r.cloned && r.run
+        const cell = document.createElement("div")
+        cell.className = "app-cell"
+          + (r.running ? " running" : "")
+          + (!canRun ? " disabled" : "")
+
+        if (canRun) {
+          cell.onclick = () => toggleApp(r.name, r.running)
+        }
 
         const icon = r.logo
-          ? `<img class="repo-icon" src="file:///${r.logo.replace(/\\/g, '/')}">`
-          : `<div class="repo-icon-fallback">${r.name[0].toUpperCase()}</div>`
+          ? `<div class="app-icon-wrap"><img class="app-icon" src="file:///${r.logo.replace(/\\/g, '/')}"></div>`
+          : `<div class="app-icon-wrap"><div class="app-icon-fallback">${r.name[0].toUpperCase()}</div></div>`
 
-        const dot = r.running
-          ? '<span class="status-dot running"></span>'
-          : '<span class="status-dot stopped"></span>'
-
-        if (!r.cloned) {
-          card.innerHTML = `
-            <div class="repo-info">
-              ${icon}
-              <div class="repo-text">
-                <span class="repo-name">${r.name}</span>
-                <span class="tag-not-cloned">${t("notCloned")}</span>
-              </div>
-            </div>
-            <button class="btn btn-disabled" disabled>--</button>`
-        } else if (!r.run) {
-          card.innerHTML = `
-            <div class="repo-info">
-              ${icon}
-              <div class="repo-text">
-                <span class="repo-name">${r.name}</span>
-                <span class="tag-no-run">${t("noRunCmd")}</span>
-              </div>
-            </div>
-            <button class="btn btn-disabled" disabled>--</button>`
-        } else if (r.running) {
-          card.innerHTML = `
-            <div class="repo-info">
-              ${icon}
-              <div class="repo-text">
-                <span class="repo-name">${dot} ${r.name}</span>
-                <span class="repo-cmd">${r.run}</span>
-              </div>
-            </div>
-            <button class="btn btn-stop" onclick="stop('${r.name}')">${t("stop")}</button>`
-        } else {
-          card.innerHTML = `
-            <div class="repo-info">
-              ${icon}
-              <div class="repo-text">
-                <span class="repo-name">${dot} ${r.name}</span>
-                <span class="repo-cmd">${r.run}</span>
-              </div>
-            </div>
-            <button class="btn btn-run" onclick="run('${r.name}')">${t("run")}</button>`
-        }
-        list.appendChild(card)
+        cell.innerHTML = `
+          ${icon}
+          <span class="app-name">${r.name}</span>
+        `
+        grid.appendChild(cell)
       }
     }
 
-    // Progressive startup: repos first, then tool names (shimmer), then full tool status
+    async function toggleApp(name, isRunning) {
+      if (busyApps.has(name)) return
+      busyApps.add(name)
+
+      if (isRunning) {
+        await ipcRenderer.invoke("stop-project", name)
+      } else {
+        await ipcRenderer.invoke("run-project", name)
+      }
+
+      busyApps.delete(name)
+      renderRepos()
+    }
+
     async function fullLoad() {
-      // Step 1: Repos render instantly
       const reposPromise = ipcRenderer.invoke("get-repos")
-      // Step 2: Tool names for shimmer placeholders
       const toolNamesPromise = ipcRenderer.invoke("get-tool-names")
 
       const [repos, toolNames] = await Promise.all([reposPromise, toolNamesPromise])
-      renderRepoList(repos)
+      renderAppGrid(repos)
       renderToolsShimmer(toolNames)
 
-      // Step 3: Full tool check (parallel, async) — UI stays interactive
       const tools = await ipcRenderer.invoke("get-tools")
       cachedTools = tools
       renderTools(tools)
     }
 
-    // Fast refresh — repos only, no tool re-check
     async function renderRepos() {
       const repos = await ipcRenderer.invoke("get-repos")
       if (cachedTools) renderTools(cachedTools)
-      renderRepoList(repos)
+      renderAppGrid(repos)
     }
 
-    async function run(name) {
-      const btn = event.target
-      btn.disabled = true
-      btn.textContent = t("starting")
-      btn.className = "btn btn-disabled"
-      ipcRenderer.invoke("run-project", name).then(() => renderRepos())
-    }
-
-    async function stop(name) {
-      const btn = event.target
-      btn.disabled = true
-      btn.textContent = t("stopping")
-      btn.className = "btn btn-disabled"
-      ipcRenderer.invoke("stop-project", name).then(() => renderRepos())
-    }
-
-    // Loading overlay helpers
     function showOverlay(text) {
-      const overlay = document.getElementById("loading-overlay")
       document.getElementById("loading-text").textContent = text
       document.getElementById("loading-log").textContent = ""
-      overlay.classList.add("active")
+      document.getElementById("loading-overlay").classList.add("active")
     }
 
     function hideOverlay() {
@@ -580,21 +473,15 @@
       btn.textContent = t("syncing")
       showOverlay(t("syncProgress"))
 
-      const result = await ipcRenderer.invoke("sync-all")
+      await ipcRenderer.invoke("sync-all")
 
       hideOverlay()
       btn.textContent = t("syncAll")
       btn.disabled = false
-      // After sync, do full reload (repos might have been cloned, tools might have changed)
       fullLoad()
     }
 
-    // Listen for real-time sync progress from main process
-    ipcRenderer.on("sync-progress", (_, line) => {
-      appendOverlayLog(line)
-    })
-
-    // Auto-refresh when a process exits — fast path
+    ipcRenderer.on("sync-progress", (_, line) => appendOverlayLog(line))
     ipcRenderer.on("status-changed", () => renderRepos())
 
     applyTheme()

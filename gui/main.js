@@ -38,13 +38,15 @@ function getRunCmd(detected, repo, repoPath) {
   if (repo.run) return repo.run
 
   // Check if zerosetup's detected command actually works
-  // (e.g. "node dist-electron/main.js" fails if dist-electron/ not built yet)
   if (detected && detected.startCmd) {
     const match = detected.startCmd.match(/^node\s+(.+)$/)
     if (match) {
       const target = path.join(repoPath, match[1])
-      if (!fs.existsSync(target)) {
-        // Detected entry point doesn't exist, fall through to scripts
+      // Skip if file doesn't exist (unbuilt dist-electron/)
+      // Skip if project uses electron - "node main.js" won't work, need "npm run dev"
+      const hasElectron = fs.existsSync(path.join(repoPath, "node_modules", "electron"))
+      if (!fs.existsSync(target) || hasElectron) {
+        // Fall through to package.json scripts
       } else {
         return detected.startCmd
       }
@@ -126,8 +128,8 @@ let mainWindow = null
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 520,
-    height: 600,
+    width: 420,
+    height: 520,
     resizable: false,
     webPreferences: {
       nodeIntegration: true,
