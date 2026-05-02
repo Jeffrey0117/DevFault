@@ -34,10 +34,22 @@ function smartDetect(repoPath) {
   }
 }
 
-function getRunCmd(detected, repo) {
+function getRunCmd(detected, repo, repoPath) {
   if (repo.run) return repo.run
-  if (!detected) return null
-  return detected.startCmd || null
+  if (detected && detected.startCmd) return detected.startCmd
+
+  // Fallback: read package.json scripts directly
+  try {
+    const pkgPath = path.join(repoPath, "package.json")
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"))
+      const scripts = pkg.scripts || {}
+      if (scripts.dev) return "npm run dev"
+      if (scripts.start) return "npm start"
+    }
+  } catch {}
+
+  return null
 }
 
 // Track running processes
@@ -83,7 +95,7 @@ function getRepos() {
     const repoPath = path.join(baseDir, name)
     const cloned = fs.existsSync(path.join(repoPath, ".git"))
     const detected = cloned ? smartDetect(repoPath) : null
-    const run = getRunCmd(detected, r)
+    const run = getRunCmd(detected, r, repoPath)
     const logoPath = r.logo ? path.join(repoPath, r.logo) : null
     return {
       name,
@@ -139,7 +151,7 @@ ipcMain.handle("run-project", (_, name) => {
 
   const target = path.join(baseDir, name)
   const detected = smartDetect(target)
-  const runCmd = getRunCmd(detected, repo)
+  const runCmd = getRunCmd(detected, repo, target)
   if (!runCmd) return { ok: false, error: "No run command" }
 
   if (running[name]) return { ok: false, error: "Already running" }
