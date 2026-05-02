@@ -5,6 +5,7 @@ import { createRequire } from "module"
 import fs from "fs"
 import path from "path"
 import os from "os"
+import { smartInstall } from "smart-install"
 
 const require = createRequire(import.meta.url)
 const { detect } = require("zerosetup/lib/detect")
@@ -389,21 +390,13 @@ for (const repo of config.repos) {
     const pm = detected?.packageManager?.name
 
     if (installCmd) {
-      const pmLabel = pm && pm !== "npm" ? ` (${pm})` : ""
-      console.log(`  ${name}: installing deps${pmLabel}...`)
-      try {
-        execSync(installCmd, { cwd: target, stdio: "inherit" })
-      } catch {
-        // Retry with --ignore-scripts (handles electron postinstall failures)
-        console.log(`  ${name}: retrying with --ignore-scripts...`)
-        execSync(`${installCmd} --ignore-scripts`, { cwd: target, stdio: "inherit" })
-
-        // Manually install electron binary if needed
-        const electronInstall = path.join(target, "node_modules", "electron", "install.js")
-        if (fs.existsSync(electronInstall)) {
-          console.log(`  ${name}: installing electron binary...`)
-          execSync(`node "${electronInstall}"`, { cwd: target, stdio: "inherit" })
-        }
+      console.log(`  ${name}: installing deps...`)
+      const result = smartInstall(target, { packageManager: pm || undefined })
+      if (result.recovered.length > 0) {
+        console.log(`  ${name}: recovered binaries: ${result.recovered.join(", ")}`)
+      }
+      if (!result.ok) {
+        console.error(`  ${name}: install issues: ${result.failed.join(", ")}`)
       }
     }
 

@@ -27,6 +27,7 @@
   "author": "Jeffrey0117",
   "license": "MIT",
   "dependencies": {
+    "smart-install": "github:Jeffrey0117/smart-install",
     "zerosetup": "^2.1.0"
   }
 }
