@@ -14,7 +14,7 @@
     {
       "name": "python",
       "cmd": "python",
-      "winget": "Python.Python.3.12"
+      "winget": "Python.Python.3.13"
     },
     {
       "name": "gh",

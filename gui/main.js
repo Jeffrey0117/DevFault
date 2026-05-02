@@ -76,16 +76,38 @@ const running = {}
 let toolsCache = null
 
 async function checkTool(tool) {
+  // 1. Check PATH
   try {
     await exec(`where ${tool.cmd}`)
     return true
-  } catch {
-    try {
-      const { stdout } = await exec(`winget list --id ${tool.winget} --accept-source-agreements`)
-      return stdout.includes(tool.winget)
-    } catch {
-      return false
+  } catch {}
+
+  // 2. Check common install locations (e.g. Python not in PATH)
+  const localProgs = path.join(os.homedir(), "AppData", "Local", "Programs")
+  const commonPaths = [
+    path.join(localProgs, "Python", "**", `${tool.cmd}.exe`),
+    path.join("C:", "Program Files", "**", `${tool.cmd}.exe`),
+  ]
+  for (const pattern of commonPaths) {
+    // Simple glob: check known versioned dirs
+    const base = path.dirname(pattern).replace("**", "")
+    if (fs.existsSync(base)) {
+      try {
+        const entries = fs.readdirSync(base)
+        for (const entry of entries) {
+          const candidate = path.join(base, entry, `${tool.cmd}.exe`)
+          if (fs.existsSync(candidate)) return true
+        }
+      } catch {}
     }
+  }
+
+  // 3. Check winget
+  try {
+    const { stdout } = await exec(`winget list --id ${tool.winget} --accept-source-agreements`)
+    return stdout.includes(tool.winget)
+  } catch {
+    return false
   }
 }
 
