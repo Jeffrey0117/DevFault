@@ -391,7 +391,20 @@ for (const repo of config.repos) {
     if (installCmd) {
       const pmLabel = pm && pm !== "npm" ? ` (${pm})` : ""
       console.log(`  ${name}: installing deps${pmLabel}...`)
-      execSync(installCmd, { cwd: target, stdio: "inherit" })
+      try {
+        execSync(installCmd, { cwd: target, stdio: "inherit" })
+      } catch {
+        // Retry with --ignore-scripts (handles electron postinstall failures)
+        console.log(`  ${name}: retrying with --ignore-scripts...`)
+        execSync(`${installCmd} --ignore-scripts`, { cwd: target, stdio: "inherit" })
+
+        // Manually install electron binary if needed
+        const electronInstall = path.join(target, "node_modules", "electron", "install.js")
+        if (fs.existsSync(electronInstall)) {
+          console.log(`  ${name}: installing electron binary...`)
+          execSync(`node "${electronInstall}"`, { cwd: target, stdio: "inherit" })
+        }
+      }
     }
 
     // Install npm globals if detected
