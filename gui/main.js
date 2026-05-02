@@ -6,6 +6,7 @@ const path = require("path")
 const os = require("os")
 
 const exec = promisify(execCb)
+const { detect } = require("zerosetup/lib/detect")
 
 // Load config (same logic as CLI)
 const candidates = [
@@ -16,6 +17,28 @@ const candidates = [
 const configPath = candidates.find((p) => fs.existsSync(p))
 const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
 const baseDir = path.resolve(config.baseDir.replace("~", os.homedir()))
+
+// Extract repo name from config entry (same logic as CLI)
+function repoName(repo) {
+  if (repo.name) return repo.name
+  const match = repo.url.match(/\/([^/]+?)(\.git)?$/)
+  return match ? match[1] : repo.url
+}
+
+// Auto-detect run command (same logic as CLI)
+function smartDetect(repoPath) {
+  try {
+    return detect(repoPath)
+  } catch {
+    return null
+  }
+}
+
+function getRunCmd(detected, repo) {
+  if (repo.run) return repo.run
+  if (!detected) return null
+  return detected.startCmd || null
+}
 
 // Track running processes
 const running = {}
@@ -56,12 +79,17 @@ function getToolNames() {
 
 function getRepos() {
   return config.repos.map((r) => {
-    const logoPath = r.logo ? path.join(baseDir, r.name, r.logo) : null
+    const name = repoName(r)
+    const repoPath = path.join(baseDir, name)
+    const cloned = fs.existsSync(path.join(repoPath, ".git"))
+    const detected = cloned ? smartDetect(repoPath) : null
+    const run = getRunCmd(detected, r)
+    const logoPath = r.logo ? path.join(repoPath, r.logo) : null
     return {
-      name: r.name,
-      run: r.run || null,
-      cloned: fs.existsSync(path.join(baseDir, r.name, ".git")),
-      running: !!running[r.name],
+      name,
+      run,
+      cloned,
+      running: !!running[name],
       logo: logoPath && fs.existsSync(logoPath) ? logoPath : null,
     }
   })
@@ -106,13 +134,17 @@ ipcMain.handle("refresh-tools", async () => {
 })
 
 ipcMain.handle("run-project", (_, name) => {
-  const repo = config.repos.find((r) => r.name === name)
-  if (!repo || !repo.run) return { ok: false, error: "No run command" }
+  const repo = config.repos.find((r) => repoName(r) === name)
+  if (!repo) return { ok: false, error: "Repo not found" }
+
+  const target = path.join(baseDir, name)
+  const detected = smartDetect(target)
+  const runCmd = getRunCmd(detected, repo)
+  if (!runCmd) return { ok: false, error: "No run command" }
 
   if (running[name]) return { ok: false, error: "Already running" }
 
-  const target = path.join(baseDir, repo.name)
-  const child = spawn("cmd.exe", ["/c", repo.run], {
+  const child = spawn("cmd.exe", ["/c", runCmd], {
     cwd: target,
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true,
