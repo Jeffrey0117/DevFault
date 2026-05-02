@@ -36,7 +36,22 @@ function smartDetect(repoPath) {
 
 function getRunCmd(detected, repo, repoPath) {
   if (repo.run) return repo.run
-  if (detected && detected.startCmd) return detected.startCmd
+
+  // Check if zerosetup's detected command actually works
+  // (e.g. "node dist-electron/main.js" fails if dist-electron/ not built yet)
+  if (detected && detected.startCmd) {
+    const match = detected.startCmd.match(/^node\s+(.+)$/)
+    if (match) {
+      const target = path.join(repoPath, match[1])
+      if (!fs.existsSync(target)) {
+        // Detected entry point doesn't exist, fall through to scripts
+      } else {
+        return detected.startCmd
+      }
+    } else {
+      return detected.startCmd
+    }
+  }
 
   // Fallback: read package.json scripts directly
   try {
