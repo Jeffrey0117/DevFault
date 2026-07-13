@@ -24,7 +24,7 @@ README.md            ← Full usage + ecosystem docs
 
 ## Key concepts
 
-- **Config** (`dev.config.json`): `{ baseDir, tools[], repos[] }`. Lookup order: `$DEVFAULT_CONFIG` env var, then `./dev.config.json`, then `~/.devfault/dev.config.json`, then the copy bundled in the npm package (fresh-machine fallback). Same lookup logic in CLI and GUI. `baseDir` supports `~` expansion.
+- **Config** (`dev.config.json`): `{ baseDir, tools[], npmGlobal[], repos[] }`. `npmGlobal` = global npm CLIs (claude-code, pm2, pnpm…) installed when missing (checked via `npm root -g` dir). Lookup order: `$DEVFAULT_CONFIG` env var, then `./dev.config.json`, then `~/.devfault/dev.config.json`, then the copy bundled in the npm package (fresh-machine fallback). Same lookup logic in CLI and GUI. `baseDir` supports `~` expansion.
 - **3-phase full setup** (default `devfault` command):
   1. **Tools** — for each `tool`, check via `where <cmd>` then `winget list`; install missing via `winget install`.
   2. **Repos** — clone (or `git pull` if `.git` exists), optional `branch` checkout.

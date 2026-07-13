@@ -30,7 +30,30 @@
       "name": "ffmpeg",
       "cmd": "ffmpeg",
       "winget": "Gyan.FFmpeg"
+    },
+    {
+      "name": "cloudflared",
+      "cmd": "cloudflared",
+      "winget": "Cloudflare.cloudflared"
     }
+  ],
+  "npmGlobal": [
+    "@anthropic-ai/claude-code",
+    "claude-mem",
+    "pm2",
+    "pnpm",
+    "tsx",
+    "bun",
+    "wrangler",
+    "supabase",
+    "@jeffrey0117/cloudpipe",
+    "@github/copilot",
+    "@google/gemini-cli",
+    "@openai/codex",
+    "@musistudio/claude-code-router",
+    "opencode-ai",
+    "happy-coder",
+    "agent-browser"
   ],
   "repos": [
     {
@@ -85,6 +108,9 @@
     },
     {
       "url": "https://github.com/Jeffrey0117/MdMan.git"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/AutoReel.git"
     },
     {
       "url": "https://github.com/Jeffrey0117/DevFault.git"

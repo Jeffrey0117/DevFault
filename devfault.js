@@ -134,8 +134,10 @@ function isToolInstalled(tool) {
     return true
   } catch {}
 
-  // 2. Check common install locations (e.g. Python installer doesn't add PATH)
-  //    — keep in sync with checkTool() in gui/main.js
+  // 2. Check common install locations (e.g. Python installer doesn't add PATH,
+  //    loose exe dropped in the home dir) — keep in sync with checkTool() in gui/main.js
+  if (fs.existsSync(path.join(os.homedir(), `${tool.cmd}.exe`))) return true
+
   const commonRoots = [
     path.join(os.homedir(), "AppData", "Local", "Programs", "Python"),
     path.join("C:", "Program Files"),
@@ -158,6 +160,41 @@ function isToolInstalled(tool) {
   } catch {
     return false
   }
+}
+
+// ==================== npm global helpers ====================
+
+// Installs missing global npm CLIs (config top-level `npmGlobal: []`).
+// Presence check via the global node_modules dir — install only when absent;
+// packages keep themselves updated (or the user does) after that.
+function installNpmGlobals(pkgs) {
+  if (!pkgs || pkgs.length === 0) return []
+
+  let globalRoot
+  try {
+    globalRoot = execSync("npm root -g", {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim()
+  } catch {
+    console.error("  npm not found — skipping global CLIs")
+    return [...pkgs]
+  }
+
+  const failed = []
+  for (const pkg of pkgs) {
+    if (fs.existsSync(path.join(globalRoot, ...pkg.split("/")))) continue
+
+    console.log(`  installing ${pkg}...`)
+    try {
+      execSync(`npm install -g ${pkg}`, { stdio: "ignore" })
+      console.log(`  ${pkg} installed!`)
+    } catch {
+      console.error(`  ${pkg} failed`)
+      failed.push(pkg)
+    }
+  }
+  return failed
 }
 
 // ==================== Release app helpers ====================
@@ -564,6 +601,9 @@ if (cmd === "up") {
     }
   }
 
+  // 1.5 Global npm CLIs
+  const npmFailed = installNpmGlobals(cfg.npmGlobal)
+
   // 2. Repos — clone missing (non-release), pull existing, deps only when HEAD moved
   const repoBase = path.resolve(cfg.baseDir.replace("~", os.homedir()))
   fs.mkdirSync(repoBase, { recursive: true })
@@ -626,7 +666,7 @@ if (cmd === "up") {
   pinConfigToSyncedClone(repoBase)
   writeJson(statePath, { ...readJson(statePath, {}), lastUp: Date.now() })
 
-  const allFailed = [...toolsFailed, ...reposFailed, ...appsFailed]
+  const allFailed = [...toolsFailed, ...npmFailed, ...reposFailed, ...appsFailed]
   console.log("")
   if (allFailed.length > 0) {
     console.log(`  Issues: ${allFailed.join(", ")}`)
@@ -718,6 +758,14 @@ if (config.tools && config.tools.length > 0) {
   console.log("")
 }
 
+// === Phase 1.5: Global npm CLIs ===
+let npmGlobalFailed = []
+if (config.npmGlobal && config.npmGlobal.length > 0) {
+  console.log("[Phase 1.5] Global npm CLIs...\n")
+  npmGlobalFailed = installNpmGlobals(config.npmGlobal)
+  console.log(`  ${config.npmGlobal.length - npmGlobalFailed.length}/${config.npmGlobal.length} ready\n`)
+}
+
 // === Phase 2: Clone/pull repos ===
 console.log("[Phase 2] Repos...\n")
 console.log(`  Base: ${baseDir}\n`)
@@ -795,8 +843,9 @@ pinConfigToSyncedClone(baseDir)
 
 // === Summary ===
 console.log("")
-if (toolsFailed.length > 0 || failed.length > 0 || appsFailed.length > 0) {
+if (toolsFailed.length > 0 || npmGlobalFailed.length > 0 || failed.length > 0 || appsFailed.length > 0) {
   if (toolsFailed.length > 0) console.log(`  Failed tools: ${toolsFailed.join(", ")}`)
+  if (npmGlobalFailed.length > 0) console.log(`  Failed npm globals: ${npmGlobalFailed.join(", ")}`)
   if (failed.length > 0) console.log(`  Failed repos: ${failed.join(", ")}`)
   if (appsFailed.length > 0) console.log(`  Failed apps: ${appsFailed.join(", ")}`)
 } else {

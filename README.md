@@ -87,7 +87,8 @@ npm i -g github:Jeffrey0117/DevFault && devfault && devfault autosync
 就這一行。**不用 init、不用編輯任何 config**——設定檔跟著套件一起裝進來。
 跑完之後：
 
-- 系統工具（git / python / ffmpeg / docker…）全裝好
+- 系統工具（git / python / ffmpeg / docker / cloudflared…）全裝好
+- 全域 npm CLI（Claude Code、claude-mem、pm2、pnpm、tsx、wrangler…）全裝好
 - 所有 repo clone 到 `~/workspace/` + 依賴裝好
 - 打包 app（DuckShot、SpeakSlow、RePic、ReVid、Screenshot-OCR）
   最新版靜默安裝，開始選單直接點

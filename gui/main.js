@@ -83,7 +83,10 @@ async function checkTool(tool) {
     return true
   } catch {}
 
-  // 2. Check common install locations (e.g. Python not in PATH)
+  // 2. Check common install locations (e.g. Python not in PATH,
+  //    loose exe dropped in the home dir) — keep in sync with isToolInstalled() in devfault.js
+  if (fs.existsSync(path.join(os.homedir(), `${tool.cmd}.exe`))) return true
+
   const localProgs = path.join(os.homedir(), "AppData", "Local", "Programs")
   const commonPaths = [
     path.join(localProgs, "Python", "**", `${tool.cmd}.exe`),
