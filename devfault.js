@@ -203,6 +203,23 @@ const LOCKFILES = new Set([
   "Pipfile.lock",
 ])
 
+// After setup clones the DevFault repo, future runs should read the
+// git-synced config instead of the static copy bundled in the npm package.
+// Pins DEVFAULT_CONFIG only when currently running off the bundled fallback.
+function pinConfigToSyncedClone(cfgBaseDir) {
+  if (process.platform !== "win32") return
+  if (process.env.DEVFAULT_CONFIG) return
+  if (configPath !== path.join(pkgDir, "dev.config.json")) return
+
+  const synced = path.join(cfgBaseDir, "DevFault", "dev.config.json")
+  if (!fs.existsSync(synced)) return
+
+  try {
+    execSync(`setx DEVFAULT_CONFIG "${synced}"`, { stdio: "ignore" })
+    console.log(`  Config pinned: DEVFAULT_CONFIG -> ${synced}`)
+  } catch {}
+}
+
 // Installs mutate lockfiles; a conflicted lockfile must never wedge an
 // unattended sync. Resolves to HEAD's version only when every unmerged
 // file is a lockfile — real conflicts are left alone.
@@ -606,6 +623,7 @@ if (cmd === "up") {
   console.log("\n  [apps] checking releases...")
   const appsFailed = await installApps(cfg.repos || [])
 
+  pinConfigToSyncedClone(repoBase)
   writeJson(statePath, { ...readJson(statePath, {}), lastUp: Date.now() })
 
   const allFailed = [...toolsFailed, ...reposFailed, ...appsFailed]
@@ -772,6 +790,8 @@ if (config.repos.some((r) => r.dist === "release")) {
   appsFailed = await installApps(config.repos)
   console.log("")
 }
+
+pinConfigToSyncedClone(baseDir)
 
 // === Summary ===
 console.log("")

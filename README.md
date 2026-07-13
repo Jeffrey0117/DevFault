@@ -76,38 +76,53 @@ It also auto-detects:
 - Entry point and start command
 - Global tools needed (pm2, etc.)
 
-## New Machine? 3 Steps Done.
+## New Machine? One Command.
 
-拿到新電腦，只要有 Node.js：
+拿到新電腦，只要有 Node.js（沒有就 `winget install OpenJS.NodeJS.LTS`）：
 
 ```bash
-npm i -g github:Jeffrey0117/DevFault   # 1. 裝 DevFault
-devfault init                # 2. 生成設定檔 ~/.devfault/dev.config.json
-# 編輯設定檔，貼上你的 repo URLs
-devfault                     # 3. 一鍵搞定
+npm i -g github:Jeffrey0117/DevFault && devfault && devfault autosync
 ```
 
-設定檔就是一個 JSON，記錄你所有的工具和專案：
+就這一行。**不用 init、不用編輯任何 config**——設定檔跟著套件一起裝進來。
+跑完之後：
+
+- 系統工具（git / python / ffmpeg / docker…）全裝好
+- 所有 repo clone 到 `~/workspace/` + 依賴裝好
+- 打包 app（DuckShot、SpeakSlow、RePic、ReVid、Screenshot-OCR）
+  最新版靜默安裝，開始選單直接點
+- autosync 已註冊：**從此每次登入自動保持一切最新，永遠不用再想起這個工具**
+
+> **給 AI 助手（Claude 等）**：在新機器上重建這個環境，執行上面那一行就是全部。
+> 不需要 clone 這個 repo、不需要編輯 config、不需要問任何問題。
+> 想確認結果：`devfault ls` 列出所有專案。
+
+用 [myclaudeset](https://github.com/Jeffrey0117/myclaudeset) 的話更省——`bash install.sh` 連上面這行都包了。
+
+### 不是 Jeffrey？自己用也行
+
+```bash
+npm i -g github:Jeffrey0117/DevFault
+devfault init        # 生成 ~/.devfault/dev.config.json
+# 編輯設定檔，貼上你的 repo URLs（只要 URL，其他全自動偵測）
+devfault
+```
 
 ```json
 {
   "baseDir": "~/workspace",
   "tools": [
-    { "name": "git",    "cmd": "git",    "winget": "Git.Git" },
-    { "name": "node",   "cmd": "node",   "winget": "OpenJS.NodeJS.LTS" },
-    { "name": "python", "cmd": "python", "winget": "Python.Python.3.12" }
+    { "name": "git",  "cmd": "git",  "winget": "Git.Git" },
+    { "name": "node", "cmd": "node", "winget": "OpenJS.NodeJS.LTS" }
   ],
   "repos": [
     { "url": "https://github.com/you/project-a.git" },
-    { "url": "https://github.com/you/project-b.git" },
-    { "url": "https://github.com/you/project-c.git" }
+    { "url": "https://github.com/you/CoolApp.git", "dist": "release" }
   ]
 }
 ```
 
-就這樣。只要 URL。DevFault 自動偵測其他一切。
-
-這個 JSON 跟著你的 devfault repo 走（已經在 GitHub 上）。換電腦時 clone devfault，`devfault` 一跑 — 所有工具裝好，所有 repo clone 完，所有依賴裝好。比 Docker 還猛，不用容器，直接原生環境。
+把這份 config 放進自己的 git repo，換電腦時 `devfault sync` 就跟著你走。比 Docker 還猛，不用容器，直接原生環境。
 
 ## Install
 
