@@ -124,7 +124,10 @@ setx DEVFAULT_CONFIG "C:\path\to\devup\dev.config.json"   # Windows
 ## Usage
 
 ```bash
-devfault              # Full setup (install tools + clone/pull all repos)
+devfault              # Full setup (tools + repos + packaged apps)
+devfault up           # Headless sync: pull everything, update apps (for automation)
+devfault autosync     # Register hidden 'up --auto' at every logon (Windows Run key)
+devfault autosync off # Remove the logon task
 devfault init         # Generate sample config at ~/.devfault/
 devfault add <url>    # Add a repo to config
 devfault scan         # Auto-detect repos in workspace, add missing ones
@@ -132,6 +135,34 @@ devfault sync         # Sync config across machines (git pull + push)
 devfault ls           # List all projects with detected run commands
 devfault run <name>   # Launch a project
 ```
+
+### Packaged apps (`dist: "release"`)
+
+Repos that ship GitHub Releases (electron-builder `Setup.exe`) can be marked in config:
+
+```json
+{ "url": "https://github.com/you/CoolApp.git", "dist": "release" }
+```
+
+DevFault then **installs the packaged app instead of cloning source**: it grabs the
+latest release, runs the installer silently (`/S`), and records the version in
+`~/.devfault/apps.json` so unchanged versions are skipped. If a source clone already
+exists (your dev machine), it still gets `git pull` — best of both.
+
+### Set-and-forget mode
+
+```bash
+devfault autosync
+```
+
+Registers a hidden logon task (`HKCU` Run key, no admin needed) that runs
+`devfault up --auto` — throttled to once per 6 hours. It pulls the config repo,
+pulls all repos (reinstalling deps only when HEAD moved), and updates packaged
+apps to the latest release. Log: `~/.devfault/logs/up.log`.
+
+New machine flow: `bash myclaudeset/install.sh` does everything — installs DevFault,
+runs the full setup, points `DEVFAULT_CONFIG` at the git-synced config, and enables
+autosync. After that you never think about it again.
 
 ### Cross-Machine Sync
 

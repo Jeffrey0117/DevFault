@@ -1,13 +1,14 @@
 {
   "name": "devfault-cli",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Rebuild your entire dev environment with one command. Auto-detects everything.",
   "type": "module",
   "bin": {
     "devfault": "./devfault.js"
   },
   "files": [
-    "devfault.js"
+    "devfault.js",
+    "dev.config.json"
   ],
   "scripts": {
     "start": "node devfault.js"

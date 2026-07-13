@@ -2,6 +2,7 @@
 
 import { execSync } from "child_process"
 import { createRequire } from "module"
+import { fileURLToPath } from "url"
 import fs from "fs"
 import path from "path"
 import os from "os"
@@ -44,10 +45,13 @@ if (cmd === "init" || cmd === "--init") {
 
 // ==================== Load config ====================
 
+const pkgDir = path.dirname(fileURLToPath(import.meta.url))
+
 const candidates = [
   process.env.DEVFAULT_CONFIG,
   path.join(process.cwd(), "dev.config.json"),
   path.join(os.homedir(), ".devfault", "dev.config.json"),
+  path.join(pkgDir, "dev.config.json"),
 ].filter(Boolean)
 
 const configPath = candidates.find((p) => fs.existsSync(p))
@@ -124,20 +128,192 @@ function getRunCmd(detected, repo) {
 }
 
 function isToolInstalled(tool) {
+  // 1. Check PATH
   try {
     execSync(`where ${tool.cmd}`, { stdio: "ignore" })
     return true
-  } catch {
+  } catch {}
+
+  // 2. Check common install locations (e.g. Python installer doesn't add PATH)
+  //    — keep in sync with checkTool() in gui/main.js
+  const commonRoots = [
+    path.join(os.homedir(), "AppData", "Local", "Programs", "Python"),
+    path.join("C:", "Program Files"),
+  ]
+  for (const root of commonRoots) {
     try {
-      const out = execSync(`winget list --id ${tool.winget} --accept-source-agreements`, {
-        encoding: "utf-8",
-        stdio: ["ignore", "pipe", "ignore"],
-      })
-      return out.includes(tool.winget)
-    } catch {
-      return false
+      for (const entry of fs.readdirSync(root)) {
+        if (fs.existsSync(path.join(root, entry, `${tool.cmd}.exe`))) return true
+      }
+    } catch {}
+  }
+
+  // 3. Check winget registry
+  try {
+    const out = execSync(`winget list --id ${tool.winget} --accept-source-agreements`, {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+    return out.includes(tool.winget)
+  } catch {
+    return false
+  }
+}
+
+// ==================== Release app helpers ====================
+
+const devfaultDir = path.join(os.homedir(), ".devfault")
+
+function ghSlug(url) {
+  const m = url.match(/github\.com[:/]+([^/]+)\/([^/\s]+?)(\.git)?$/i)
+  return m ? `${m[1]}/${m[2]}` : null
+}
+
+function readJson(p, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(p, "utf-8"))
+  } catch {
+    return fallback
+  }
+}
+
+function writeJson(p, obj) {
+  fs.mkdirSync(path.dirname(p), { recursive: true })
+  fs.writeFileSync(p, JSON.stringify(obj, null, 2) + "\n")
+}
+
+function gitHead(dir) {
+  try {
+    return execSync(`git -C "${dir}" rev-parse HEAD`, {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim()
+  } catch {
+    return null
+  }
+}
+
+const LOCKFILES = new Set([
+  "package-lock.json",
+  "pnpm-lock.yaml",
+  "yarn.lock",
+  "bun.lockb",
+  "uv.lock",
+  "poetry.lock",
+  "Pipfile.lock",
+])
+
+// Installs mutate lockfiles; a conflicted lockfile must never wedge an
+// unattended sync. Resolves to HEAD's version only when every unmerged
+// file is a lockfile — real conflicts are left alone.
+function resolveLockfileConflicts(dir) {
+  try {
+    const out = execSync(`git -C "${dir}" diff --name-only --diff-filter=U`, {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim()
+    if (!out) return false
+
+    const files = out.split("\n")
+    if (!files.every((f) => LOCKFILES.has(path.basename(f)))) return false
+
+    for (const f of files) {
+      execSync(`git -C "${dir}" checkout HEAD -- "${f}"`, { stdio: "ignore" })
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function getLatestRelease(slug) {
+  // gh CLI first (works for private repos), public API fallback
+  try {
+    const out = execSync(`gh api repos/${slug}/releases/latest`, {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+    return JSON.parse(out)
+  } catch {}
+
+  const res = await fetch(`https://api.github.com/repos/${slug}/releases/latest`)
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`)
+  return await res.json()
+}
+
+function pickSetupAsset(release) {
+  const exes = (release.assets || []).filter(
+    (a) => /\.exe$/i.test(a.name) && !/blockmap/i.test(a.name)
+  )
+  return exes.find((a) => /setup/i.test(a.name)) || exes[0] || null
+}
+
+async function downloadAsset(slug, asset, destDir) {
+  fs.mkdirSync(destDir, { recursive: true })
+  const dest = path.join(destDir, asset.name)
+
+  try {
+    execSync(
+      `gh release download -R ${slug} --pattern "${asset.name}" -D "${destDir}" --clobber`,
+      { stdio: "ignore" }
+    )
+    if (fs.existsSync(dest)) return dest
+  } catch {}
+
+  const res = await fetch(asset.browser_download_url, { redirect: "follow" })
+  if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`)
+  fs.writeFileSync(dest, Buffer.from(await res.arrayBuffer()))
+  return dest
+}
+
+async function installApps(repos) {
+  const releaseRepos = repos.filter((r) => r.dist === "release")
+  if (releaseRepos.length === 0) return []
+
+  const appsPath = path.join(devfaultDir, "apps.json")
+  const failed = []
+  let installed = readJson(appsPath, {})
+
+  for (const repo of releaseRepos) {
+    const name = repoName(repo)
+    const slug = ghSlug(repo.url)
+
+    if (!slug) {
+      console.error(`  ${name}: cannot parse GitHub URL`)
+      failed.push(name)
+      continue
+    }
+
+    try {
+      const release = await getLatestRelease(slug)
+      const tag = release.tag_name
+
+      if (installed[name] === tag) {
+        console.log(`  ${name}: ${tag} (up to date)`)
+        continue
+      }
+
+      const asset = pickSetupAsset(release)
+      if (!asset) {
+        console.error(`  ${name}: no .exe asset in ${tag}`)
+        failed.push(name)
+        continue
+      }
+
+      console.log(`  ${name}: installing ${tag} (${asset.name})...`)
+      const exePath = await downloadAsset(slug, asset, path.join(devfaultDir, "downloads"))
+      execSync(`cmd /c start "" /wait "${exePath}" /S`, { stdio: "ignore" })
+
+      installed = { ...installed, [name]: tag }
+      writeJson(appsPath, installed)
+      console.log(`  ${name}: ${tag} installed!`)
+    } catch (err) {
+      console.error(`  ${name}: failed - ${err.message.split("\n")[0]}`)
+      failed.push(name)
     }
   }
+
+  return failed
 }
 
 // ==================== add <url> ====================
@@ -326,6 +502,168 @@ if (cmd === "run" || cmd === "--run") {
   process.exit(0)
 }
 
+// ==================== up ====================
+// Headless full sync — designed to run unattended (autosync / logon).
+
+if (cmd === "up") {
+  const auto = process.argv.includes("--auto")
+  const statePath = path.join(devfaultDir, "state.json")
+
+  if (auto) {
+    const state = readJson(statePath, {})
+    const SIX_HOURS = 6 * 60 * 60 * 1000
+    if (state.lastUp && Date.now() - state.lastUp < SIX_HOURS) process.exit(0)
+  }
+
+  console.log(`\n  DevFault up — ${new Date().toISOString()}`)
+  console.log(`  Config: ${configPath}\n`)
+
+  // 0. Config self-update (config lives in a git repo → pull latest)
+  const cfgRoot = findGitRoot(path.dirname(configPath))
+  let cfg = config
+  if (cfgRoot) {
+    try {
+      execSync(`git -C "${cfgRoot}" pull --ff-only`, { stdio: "ignore" })
+      cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"))
+      console.log("  [config] pulled latest")
+    } catch {
+      console.log("  [config] pull skipped (offline or dirty)")
+    }
+  }
+
+  // 1. Tools
+  const toolsFailed = []
+  for (const tool of cfg.tools || []) {
+    if (!isToolInstalled(tool)) {
+      console.log(`  [tools] installing ${tool.name}...`)
+      try {
+        execSync(
+          `winget install -e --id ${tool.winget} --accept-source-agreements --accept-package-agreements`,
+          { stdio: "ignore" }
+        )
+      } catch {
+        toolsFailed.push(tool.name)
+      }
+    }
+  }
+
+  // 2. Repos — clone missing (non-release), pull existing, deps only when HEAD moved
+  const repoBase = path.resolve(cfg.baseDir.replace("~", os.homedir()))
+  fs.mkdirSync(repoBase, { recursive: true })
+  const reposFailed = []
+
+  for (const repo of cfg.repos || []) {
+    const name = repoName(repo)
+    const target = path.join(repoBase, name)
+    const isRelease = repo.dist === "release"
+    const cloned = fs.existsSync(path.join(target, ".git"))
+
+    try {
+      if (!cloned) {
+        if (isRelease) continue // app-only repo: source not needed, installed below
+        console.log(`  [repos] ${name}: cloning...`)
+        execSync(`git clone ${repo.url} "${target}"`, { stdio: "ignore" })
+        if (repo.branch) {
+          execSync(`git -C "${target}" checkout ${repo.branch}`, { stdio: "ignore" })
+        }
+        const detected = smartDetect(target)
+        if (getInstallCmd(detected, repo)) {
+          console.log(`  [repos] ${name}: installing deps...`)
+          smartInstall(target, { packageManager: detected?.packageManager?.name || undefined })
+        }
+        console.log(`  [repos] ${name}: ready`)
+        continue
+      }
+
+      const before = gitHead(target)
+      // --autostash: unattended runs must survive lockfile drift from installs
+      try {
+        execSync(`git -C "${target}" pull --ff-only --autostash`, { stdio: "ignore" })
+      } catch (err) {
+        if (!resolveLockfileConflicts(target)) throw err
+        execSync(`git -C "${target}" pull --ff-only --autostash`, { stdio: "ignore" })
+        console.log(`  [repos] ${name}: recovered from lockfile conflict`)
+      }
+      const after = gitHead(target)
+
+      if (before !== after) {
+        console.log(`  [repos] ${name}: updated ${before?.slice(0, 7)} → ${after?.slice(0, 7)}`)
+        if (!isRelease) {
+          const detected = smartDetect(target)
+          if (getInstallCmd(detected, repo)) {
+            console.log(`  [repos] ${name}: reinstalling deps...`)
+            smartInstall(target, { packageManager: detected?.packageManager?.name || undefined })
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`  [repos] ${name}: failed - ${err.message.split("\n")[0]}`)
+      reposFailed.push(name)
+    }
+  }
+
+  // 3. Packaged apps
+  console.log("\n  [apps] checking releases...")
+  const appsFailed = await installApps(cfg.repos || [])
+
+  writeJson(statePath, { ...readJson(statePath, {}), lastUp: Date.now() })
+
+  const allFailed = [...toolsFailed, ...reposFailed, ...appsFailed]
+  console.log("")
+  if (allFailed.length > 0) {
+    console.log(`  Issues: ${allFailed.join(", ")}`)
+  } else {
+    console.log("  Everything up to date!")
+  }
+  console.log("")
+  process.exit(allFailed.length > 0 ? 1 : 0)
+}
+
+// ==================== autosync ====================
+// Register a hidden logon task (HKCU Run key, no admin needed) that keeps
+// everything fresh via `devfault up --auto`.
+
+if (cmd === "autosync") {
+  if (process.platform !== "win32") {
+    console.log("autosync is Windows-only for now. Use cron on this platform:")
+    console.log("  @reboot devfault up --auto")
+    process.exit(0)
+  }
+
+  const runKey = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+
+  if (cmdArg === "off") {
+    try {
+      execSync(`reg delete "${runKey}" /v DevFault /f`, { stdio: "ignore" })
+      console.log("Autosync disabled.")
+    } catch {
+      console.log("Autosync was not enabled.")
+    }
+    process.exit(0)
+  }
+
+  const logsDir = path.join(devfaultDir, "logs")
+  fs.mkdirSync(logsDir, { recursive: true })
+  const logPath = path.join(logsDir, "up.log")
+  const vbsPath = path.join(devfaultDir, "devfault-up.vbs")
+
+  const vbs = [
+    'Set sh = CreateObject("WScript.Shell")',
+    `sh.Run "cmd /c devfault up --auto >> ""${logPath}"" 2>&1", 0, False`,
+    "",
+  ].join("\r\n")
+  fs.writeFileSync(vbsPath, vbs)
+
+  execSync(`reg add "${runKey}" /v DevFault /t REG_SZ /d "wscript.exe \\"${vbsPath}\\"" /f`, {
+    stdio: "ignore",
+  })
+
+  console.log("Autosync enabled: 'devfault up --auto' runs hidden at every logon.")
+  console.log(`  Log: ${logPath}`)
+  console.log("Disable with: devfault autosync off")
+  process.exit(0)
+}
+
 // ==================== Default: full setup ====================
 
 console.log(`\n  DevFault`)
@@ -371,6 +709,12 @@ const failed = []
 for (const repo of config.repos) {
   const name = repoName(repo)
   const target = path.join(baseDir, name)
+
+  // App-only repo: distributed as a packaged release, no source clone needed
+  if (repo.dist === "release" && !fs.existsSync(path.join(target, ".git"))) {
+    console.log(`  ${name}: packaged app (installed in Phase 3)\n`)
+    continue
+  }
 
   try {
     // Clone or pull
@@ -421,13 +765,22 @@ for (const repo of config.repos) {
   }
 }
 
+// === Phase 3: Packaged apps ===
+let appsFailed = []
+if (config.repos.some((r) => r.dist === "release")) {
+  console.log("[Phase 3] Packaged apps...\n")
+  appsFailed = await installApps(config.repos)
+  console.log("")
+}
+
 // === Summary ===
 console.log("")
-if (toolsFailed.length > 0 || failed.length > 0) {
+if (toolsFailed.length > 0 || failed.length > 0 || appsFailed.length > 0) {
   if (toolsFailed.length > 0) console.log(`  Failed tools: ${toolsFailed.join(", ")}`)
   if (failed.length > 0) console.log(`  Failed repos: ${failed.join(", ")}`)
+  if (appsFailed.length > 0) console.log(`  Failed apps: ${appsFailed.join(", ")}`)
 } else {
-  console.log("  All tools & repos ready!")
+  console.log("  All tools, repos & apps ready!")
 }
 console.log(`\n  Run 'devfault ls' to see launchable projects.`)
 console.log(`  Run 'devfault run <name>' to start one.\n`)

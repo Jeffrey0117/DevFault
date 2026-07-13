@@ -39,11 +39,21 @@
     },
     {
       "url": "https://github.com/Jeffrey0117/RePic.git",
-      "logo": "repic-logo.png"
+      "logo": "repic-logo.png",
+      "dist": "release"
     },
     {
       "url": "https://github.com/Jeffrey0117/ReVid.git",
-      "logo": "revid.png"
+      "logo": "revid.png",
+      "dist": "release"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/DuckShot.git",
+      "dist": "release"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/SpeakSlow.git",
+      "dist": "release"
     },
     {
       "url": "https://github.com/Jeffrey0117/Ytify.git",
@@ -61,7 +71,8 @@
     },
     {
       "url": "https://github.com/Jeffrey0117/Screenshot-OCR.git",
-      "logo": "mainpic.png"
+      "logo": "mainpic.png",
+      "dist": "release"
     },
     {
       "url": "https://github.com/Jeffrey0117/ShotBoard.git"
@@ -74,6 +85,9 @@
     },
     {
       "url": "https://github.com/Jeffrey0117/MdMan.git"
+    },
+    {
+      "url": "https://github.com/Jeffrey0117/DevFault.git"
     }
   ]
 }
