@@ -45,17 +45,19 @@ if (cmd === "init" || cmd === "--init") {
 // ==================== Load config ====================
 
 const candidates = [
+  process.env.DEVFAULT_CONFIG,
   path.join(process.cwd(), "dev.config.json"),
   path.join(os.homedir(), ".devfault", "dev.config.json"),
-]
+].filter(Boolean)
 
 const configPath = candidates.find((p) => fs.existsSync(p))
 
 if (!configPath) {
   console.error("No dev.config.json found.\n")
   console.error("Create one at:")
-  console.error("  1. ./dev.config.json")
-  console.error("  2. ~/.devfault/dev.config.json\n")
+  console.error("  1. $DEVFAULT_CONFIG (env var pointing to a config file)")
+  console.error("  2. ./dev.config.json")
+  console.error("  3. ~/.devfault/dev.config.json\n")
   console.error("Or run: devfault init")
   process.exit(1)
 }

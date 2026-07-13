@@ -3,7 +3,7 @@
 Rebuild your entire dev environment with one command.
 
 ```
-npx devfault-cli
+npx github:Jeffrey0117/DevFault
 ```
 
 New machine? Run once, go grab a coffee, come back — everything's ready.
@@ -81,7 +81,7 @@ It also auto-detects:
 拿到新電腦，只要有 Node.js：
 
 ```bash
-npm i -g devfault-cli        # 1. 裝 DevFault
+npm i -g github:Jeffrey0117/DevFault   # 1. 裝 DevFault
 devfault init                # 2. 生成設定檔 ~/.devfault/dev.config.json
 # 編輯設定檔，貼上你的 repo URLs
 devfault                     # 3. 一鍵搞定
@@ -112,7 +112,13 @@ devfault                     # 3. 一鍵搞定
 ## Install
 
 ```bash
-npm install -g devfault-cli
+npm install -g github:Jeffrey0117/DevFault
+```
+
+設定檔預設找 `./dev.config.json` → `~/.devfault/dev.config.json`；也可以用環境變數 `DEVFAULT_CONFIG` 直接指向任何路徑（優先權最高，適合 config 跟著 repo 走的情況）：
+
+```bash
+setx DEVFAULT_CONFIG "C:\path\to\devup\dev.config.json"   # Windows
 ```
 
 ## Usage

@@ -10,10 +10,11 @@ const { detect } = require("zerosetup/lib/detect")
 
 // Load config (same logic as CLI)
 const candidates = [
+  process.env.DEVFAULT_CONFIG,
   path.join(process.cwd(), "dev.config.json"),
   path.join(__dirname, "..", "dev.config.json"),
   path.join(os.homedir(), ".devfault", "dev.config.json"),
-]
+].filter(Boolean)
 const configPath = candidates.find((p) => fs.existsSync(p))
 const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
 const baseDir = path.resolve(config.baseDir.replace("~", os.homedir()))
