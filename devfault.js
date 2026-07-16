@@ -524,7 +524,8 @@ if (cmd === "ls" || cmd === "--list") {
     const cloned = fs.existsSync(path.join(target, ".git"))
 
     if (!cloned) {
-      console.log(`  ${name.padEnd(22)} [not cloned]`)
+      // release-dist repos are installed as packaged apps — no source expected
+      console.log(`  ${name.padEnd(22)} ${repo.dist === "release" ? "[app only]" : "[not cloned]"}`)
       continue
     }
 

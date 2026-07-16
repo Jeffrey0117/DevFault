@@ -72,6 +72,7 @@
     },
     {
       "url": "https://github.com/Jeffrey0117/DuckShot.git",
+      "logo": "assets/icons/app-icon.png",
       "dist": "release"
     },
     {
