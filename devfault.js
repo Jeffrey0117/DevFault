@@ -67,7 +67,31 @@ if (!configPath) {
 }
 
 const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
-const baseDir = path.resolve(config.baseDir.replace("~", os.homedir()))
+
+// Machine-local overrides (~/.devfault/local.json) — never git-synced.
+// { "baseDir": "~/Desktop/code", "dirs": { "RepoName": "~/some/other/path" } }
+// The synced config says WHAT repos exist; local.json says WHERE they live
+// on this machine. Missing file → behavior unchanged.
+const localOverridesPath = path.join(os.homedir(), ".devfault", "local.json")
+const localOverrides = fs.existsSync(localOverridesPath)
+  ? JSON.parse(fs.readFileSync(localOverridesPath, "utf-8"))
+  : {}
+
+function expandHome(p) {
+  return path.resolve(p.replace(/^~(?=$|[/\\])/, os.homedir()))
+}
+
+const baseDir = expandHome(localOverrides.baseDir || config.baseDir)
+
+const localDirs = Object.fromEntries(
+  Object.entries(localOverrides.dirs || {}).map(([k, v]) => [k.toLowerCase(), v])
+)
+
+// Where a repo lives on THIS machine: local.json dirs > repo.dir > base/name
+function repoDir(repo, base = baseDir) {
+  const override = localDirs[repoName(repo).toLowerCase()] || repo.dir
+  return override ? expandHome(override) : path.join(base, repoName(repo))
+}
 
 // ==================== Helpers ====================
 
@@ -496,7 +520,7 @@ if (cmd === "ls" || cmd === "--list") {
   console.log("\nProjects:\n")
   for (const repo of config.repos) {
     const name = repoName(repo)
-    const target = path.join(baseDir, name)
+    const target = repoDir(repo)
     const cloned = fs.existsSync(path.join(target, ".git"))
 
     if (!cloned) {
@@ -534,7 +558,7 @@ if (cmd === "run" || cmd === "--run") {
   }
 
   const name = repoName(repo)
-  const target = path.join(baseDir, name)
+  const target = repoDir(repo)
 
   if (!fs.existsSync(target)) {
     console.error(`${name} not cloned yet. Run: devfault`)
@@ -605,13 +629,13 @@ if (cmd === "up") {
   const npmFailed = installNpmGlobals(cfg.npmGlobal)
 
   // 2. Repos — clone missing (non-release), pull existing, deps only when HEAD moved
-  const repoBase = path.resolve(cfg.baseDir.replace("~", os.homedir()))
+  const repoBase = expandHome(localOverrides.baseDir || cfg.baseDir)
   fs.mkdirSync(repoBase, { recursive: true })
   const reposFailed = []
 
   for (const repo of cfg.repos || []) {
     const name = repoName(repo)
-    const target = path.join(repoBase, name)
+    const target = repoDir(repo, repoBase)
     const isRelease = repo.dist === "release"
     const cloned = fs.existsSync(path.join(target, ".git"))
 
@@ -774,7 +798,7 @@ const failed = []
 
 for (const repo of config.repos) {
   const name = repoName(repo)
-  const target = path.join(baseDir, name)
+  const target = repoDir(repo)
 
   // App-only repo: distributed as a packaged release, no source clone needed
   if (repo.dist === "release" && !fs.existsSync(path.join(target, ".git"))) {

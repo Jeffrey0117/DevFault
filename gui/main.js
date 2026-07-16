@@ -17,7 +17,28 @@ const candidates = [
 ].filter(Boolean)
 const configPath = candidates.find((p) => fs.existsSync(p))
 const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
-const baseDir = path.resolve(config.baseDir.replace("~", os.homedir()))
+
+// Machine-local overrides (~/.devfault/local.json) — same logic as CLI
+const localOverridesPath = path.join(os.homedir(), ".devfault", "local.json")
+const localOverrides = fs.existsSync(localOverridesPath)
+  ? JSON.parse(fs.readFileSync(localOverridesPath, "utf-8"))
+  : {}
+
+function expandHome(p) {
+  return path.resolve(p.replace(/^~(?=$|[/\\])/, os.homedir()))
+}
+
+const baseDir = expandHome(localOverrides.baseDir || config.baseDir)
+
+const localDirs = Object.fromEntries(
+  Object.entries(localOverrides.dirs || {}).map(([k, v]) => [k.toLowerCase(), v])
+)
+
+// Where a repo lives on THIS machine: local.json dirs > repo.dir > baseDir/name
+function repoDir(repo) {
+  const override = localDirs[repoName(repo).toLowerCase()] || repo.dir
+  return override ? expandHome(override) : path.join(baseDir, repoName(repo))
+}
 
 // Extract repo name from config entry (same logic as CLI)
 function repoName(repo) {
@@ -135,7 +156,7 @@ function getToolNames() {
 function getRepos() {
   return config.repos.map((r) => {
     const name = repoName(r)
-    const repoPath = path.join(baseDir, name)
+    const repoPath = repoDir(r)
     const cloned = fs.existsSync(path.join(repoPath, ".git"))
     const detected = cloned ? smartDetect(repoPath) : null
     const run = getRunCmd(detected, r, repoPath)
@@ -157,6 +178,7 @@ function createWindow() {
     width: 420,
     height: 520,
     resizable: false,
+    icon: path.join(__dirname, "icon.ico"),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -192,7 +214,7 @@ ipcMain.handle("run-project", (_, name) => {
   const repo = config.repos.find((r) => repoName(r) === name)
   if (!repo) return { ok: false, error: "Repo not found" }
 
-  const target = path.join(baseDir, name)
+  const target = repoDir(repo)
   const detected = smartDetect(target)
   const runCmd = getRunCmd(detected, repo, target)
   if (!runCmd) return { ok: false, error: "No run command" }

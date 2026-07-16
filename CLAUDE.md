@@ -25,6 +25,7 @@ README.md            ← Full usage + ecosystem docs
 ## Key concepts
 
 - **Config** (`dev.config.json`): `{ baseDir, tools[], npmGlobal[], repos[] }`. `npmGlobal` = global npm CLIs (claude-code, pm2, pnpm…) installed when missing (checked via `npm root -g` dir). Lookup order: `$DEVFAULT_CONFIG` env var, then `./dev.config.json`, then `~/.devfault/dev.config.json`, then the copy bundled in the npm package (fresh-machine fallback). Same lookup logic in CLI and GUI. `baseDir` supports `~` expansion.
+- **Machine-local overrides** (`~/.devfault/local.json`, never synced): `{ baseDir?, dirs?: { [repoName]: path } }` — where repos live on THIS machine. Repo path resolution (`repoDir()` in both CLI and GUI): `local.json dirs[name]` (case-insensitive) → repo `dir` field → `baseDir/name`. Spec: `docs/superpowers/specs/2026-07-17-local-path-overrides.md`.
 - **3-phase full setup** (default `devfault` command):
   1. **Tools** — for each `tool`, check via `where <cmd>` then `winget list`; install missing via `winget install`.
   2. **Repos** — clone (or `git pull` if `.git` exists), optional `branch` checkout.
