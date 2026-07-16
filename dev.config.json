@@ -113,7 +113,8 @@
       "url": "https://github.com/Jeffrey0117/AutoReel.git"
     },
     {
-      "url": "https://github.com/Jeffrey0117/DevFault.git"
+      "url": "https://github.com/Jeffrey0117/DevFault.git",
+      "logo": "assets/logo.png"
     }
   ]
 }

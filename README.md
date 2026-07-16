@@ -1,4 +1,8 @@
-# DevFault
+<p align="center">
+  <img src="assets/logo.png" alt="DevFault" width="180">
+</p>
+
+<h1 align="center">DevFault</h1>
 
 Rebuild your entire dev environment with one command.
 
@@ -219,12 +223,36 @@ devfault sync         # 同步到 GitHub
 |-------|-------------|
 | `url` | Git clone URL (required) |
 | `name` | Folder name override (auto-extracted from URL) |
+| `dir` | Path override for this repo — absolute or `~/...` (optional) |
 | `branch` | Branch to checkout (optional) |
 | `logo` | Logo path for GUI (optional) |
 | `postInstall` | Manual override for install command (optional) |
 | `run` | Manual override for start command (optional) |
 
 Manual overrides exist but you almost never need them — ZeroSetup handles detection automatically.
+
+### Machine-local paths (`~/.devfault/local.json`)
+
+The synced config says **what** repos exist; `local.json` says **where** they
+live on *this* machine. It never syncs — each machine keeps its own. Perfect
+for an existing machine where repos already live somewhere else (renamed
+folders, nested dirs):
+
+```json
+{
+  "baseDir": "~/Desktop/code",
+  "dirs": {
+    "DevFault": "~/Desktop/code/devup",
+    "RePic": "~/Desktop/code/workhub/repic"
+  }
+}
+```
+
+- `baseDir` — overrides the synced config's `baseDir` on this machine only
+- `dirs` — per-repo path (keyed by repo name, case-insensitive, `~` ok)
+
+Resolution order: `local.json dirs` → repo `dir` field → `baseDir/name`.
+No `local.json` → nothing changes. CLI and GUI both honor it.
 
 ## Example: `devfault ls`
 
